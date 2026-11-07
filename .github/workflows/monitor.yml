@@ -1,0 +1,68 @@
+name: Monitor de preços
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"     # a cada 30 min (o GitHub pode atrasar alguns minutos)
+  workflow_dispatch: {}          # botão "Run workflow" para rodar na hora
+
+# Nunca duas rodadas ao mesmo tempo: uma espera a outra terminar (não cancela, para não perder leituras).
+concurrency:
+  group: monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: write                # necessário para salvar o histórico na branch "data"
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      DB_PATH: data/prices.db
+      LOG_FILE: ""
+      DEBUG_DIR: debug
+      HEADLESS: "true"
+      REMOTE: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependências
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Verificar configuração do Telegram
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "::warning::Secrets TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID não configurados: o histórico será coletado, mas nenhum alerta será enviado."
+          fi
+
+      - name: Restaurar histórico
+        run: bash deploy/restore_data.sh "$REMOTE" data
+
+      - name: Rodar o monitor
+        run: python main.py --once
+
+      - name: Resumo do histórico
+        if: always()
+        run: python main.py --stats
+
+      - name: Salvar histórico
+        if: always()
+        run: bash deploy/save_data.sh "$REMOTE" data
+
+      - name: Guardar capturas de páginas que falharam
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug
+          path: debug
+          retention-days: 3
+          if-no-files-found: ignore

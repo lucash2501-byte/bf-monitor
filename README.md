@@ -126,7 +126,35 @@ O monitor só lê o que a loja **publica**. Ele não adivinha códigos nem testa
 e-mail, de primeira compra ou ligados à sua conta só aparecem se a loja os mostrar na página. Trate a lista como
 sugestão: confirme no carrinho antes de contar com o desconto.
 
-## Deixar rodando 24h
+## Rodar online (GitHub Actions) — sem instalar nada no seu computador
+
+O workflow `.github/workflows/monitor.yml` roda o monitor sozinho nos servidores do GitHub, a cada ~30 minutos
+(e na hora, pelo botão "Run workflow"). É grátis em repositório público.
+
+**Configuração (tudo pelo site do GitHub):**
+
+1. No repositório: **Settings → Secrets and variables → Actions → New repository secret**. Crie dois:
+   - `TELEGRAM_BOT_TOKEN`: o token do BotFather
+   - `TELEGRAM_CHAT_ID`: o seu chat id
+2. **Settings → Actions → General → Workflow permissions**: marque **Read and write permissions** e salve.
+3. Aba **Actions**: se pedir, habilite os workflows. Abra **Monitor de preços → Run workflow** para a primeira rodada.
+4. Abra a rodada para ver o log. No fim, o passo **Resumo do histórico** mostra, por produto, quantas leituras
+   válidas e erros houve.
+
+**Como o histórico se mantém:** o `prices.db` fica na branch `data` (um único commit, sobrescrito a cada rodada
+para o repositório não crescer). Cada rodada baixa, acrescenta e salva de volta.
+
+**Limitações importantes:**
+- Os servidores do GitHub são "datacenter": algumas lojas bloqueiam esses IPs (captcha/403). Veja no log do
+  primeiro "Run workflow" quais produtos leram. Os que falharem avisam no Telegram depois de
+  `FAIL_NOTICE_AFTER` tentativas e podem exigir ajuste, ou rodar em outro lugar (ver abaixo).
+- O agendamento do GitHub não é exato: o intervalo real pode variar alguns minutos.
+- O repositório é público, então o log e o histórico de preços também são. Tokens ficam só nos Secrets
+  (o GitHub os esconde dos logs). Não coloque o token no código.
+- Repositórios sem atividade por 60 dias têm o agendamento pausado pelo GitHub; é só reativar na aba Actions.
+- Os produtos monitorados (URLs e preços-alvo do `products.json`) ficam visíveis no repositório público.
+
+## Deixar rodando 24h (alternativa: seu PC ou uma VPS)
 
 O histórico só existe enquanto o monitor está ligado, então ele precisa ficar ativo até a Black Friday.
 
