@@ -3,10 +3,11 @@
 import os
 import sys
 import time
+import json
 import logging
 from typing import List
 
-from config import load_settings, load_products
+from config import load_settings
 from db import Database
 from scraper import init_browser, scrape_product
 from notifier import send_telegram_alert
@@ -17,6 +18,21 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 log = logging.getLogger("main")
+
+
+def load_products_from_json() -> List[dict]:
+    """Carrega os produtos cadastrados diretamente do arquivo products.json."""
+    products_file = os.path.join(os.path.dirname(__file__), "products.json")
+    if not os.path.exists(products_file):
+        log.error("Arquivo products.json não encontrado em: %s", products_file)
+        return []
+    
+    try:
+        with open(products_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as exc:
+        log.error("Erro ao ler o arquivo products.json: %s", exc)
+        return []
 
 
 def run_monitoring_cycle(settings, products: List[dict], db: Database):
@@ -68,7 +84,7 @@ def run_monitoring_cycle(settings, products: List[dict], db: Database):
             if target_price > 0 and snapshot.price_cash <= target_price:
                 should_alert = True
 
-            if settings.allow_alert_without_history and not should_alert:
+            if getattr(settings, "allow_alert_without_history", False) and not should_alert:
                 should_alert = True
 
             if should_alert:
@@ -84,7 +100,7 @@ def run_monitoring_cycle(settings, products: List[dict], db: Database):
 def main():
     """Função principal com loop de execução contínua."""
     settings = load_settings()
-    products = load_products()
+    products = load_products_from_json()
     db = Database(settings.db_path)
 
     if not products:
@@ -99,8 +115,9 @@ def main():
         except Exception as exc:
             log.error("Erro na rodada de monitoramento: %s", exc)
 
-        log.info("Próxima rodada em %d minutos...", settings.check_interval_minutes)
-        time.sleep(settings.check_interval_minutes * 60)
+        check_interval = getattr(settings, "check_interval_minutes", 30)
+        log.info("Próxima rodada em %d minutos...", check_interval)
+        time.sleep(check_interval * 60)
 
 
 if __name__ == "__main__":
