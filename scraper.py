@@ -513,7 +513,12 @@ def scrape_product(browser, product: dict, settings) -> Snapshot:
                 page.wait_for_timeout(1200)
                 snap = _extract_snapshot(page, product, api_coupons)
                 if snap.error is None and snap.price_cash is None:
-                    snap.error = "Preço não encontrado (configure 'selectors.price' no products.json)"
+                    try:
+                        title = " ".join((page.title() or "").split())[:70]
+                    except Exception:  # noqa: BLE001
+                        title = ""
+                    snap.error = (f"Preço não encontrado (configure 'selectors.price' no products.json) "
+                                  f"| página: {title!r} | url final: {page.url[:110]}")
                 if snap.error is None:
                     return snap
                 last_error = snap.error
