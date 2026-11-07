@@ -1,69 +1,76 @@
-"""Módulo de notificações via Telegram com suporte a destaque de percentagem de desconto."""
+"""Envio de mensagens pelo Telegram Bot API."""
+from __future__ import annotations
 
+import html
 import logging
+import time
+
 import requests
 
 log = logging.getLogger("notifier")
 
 
-def send_telegram_alert(bot_token: str, chat_id: str, snapshot, product: dict, discount_pct: float = 0.0):
-    """Envia alerta formatado para o Telegram informando o preço e o desconto percentual."""
-    if not bot_token or not chat_id:
-        log.warning("Telegram token ou chat_id não configurados.")
+class TelegramNotifier:
+    def __init__(self, token: str, chat_id: str):
+        self.token = token
+        self.chat_id = chat_id
+
+    @property
+    def configured(self) -> bool:
+        return bool(self.token and self.chat_id and "COLE_AQUI" not in self.token + self.chat_id)
+
+    def send(self, text: str, retries: int = 3) -> bool:
+        if not self.configured:
+            log.error("Telegram não configurado (.env).")
+            return False
+        url = f"https://api.telegram.org/bot{self.token}/sendMessage"
+        payload = {
+            "chat_id": self.chat_id,
+            "text": text,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": False,
+        }
+        for attempt in range(1, retries + 1):
+            try:
+                r = requests.post(url, json=payload, timeout=20)
+                if r.ok:
+                    return True
+                log.warning("Telegram HTTP %s: %s", r.status_code, r.text[:200])
+            except requests.RequestException as exc:
+                log.warning("Telegram erro de rede: %s", exc)
+            time.sleep(2 * attempt)
         return False
 
-    title = getattr(snapshot, 'title', None) or product.get("name")
-    price_cash = getattr(snapshot, 'price_cash', 0.0)
-    price_inst = getattr(snapshot, 'price_installment', None)
-    inst_text = getattr(snapshot, 'installment_text', None)
-    coupons = getattr(snapshot, 'coupons', [])
-    url = product.get("url")
-    target = product.get("target_price", 0.0)
 
-    # Destaque de Desconto no Cabeçalho
-    header_tag = "🚨 *OFERTA DETECTADA!* 🚨"
-    discount_tag = ""
-    if discount_pct >= 10.0:
-        header_tag = f"🚨 *QUEDA DE PREÇO DETECTADA! (-{discount_pct:.1f}% OFF)* 🚨"
-        discount_tag = f"\n📉 *Queda:* {discount_pct:.1f}% abaixo do menor preço registrado!"
+def _brl(v) -> str:
+    if v is None:
+        return "—"
+    return "R$ " + f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-    # Formatação de Cupons
-    coupons_text = ""
-    if coupons:
-        coupons_formatted = "\n".join([f"• 🎟️ `{c}`" for c in coupons])
-        coupons_text = f"\n\n*Cupons / Promoções Encontradas:*\n{coupons_formatted}"
 
-    # Formatação de Parcelamento
-    installment_info = ""
-    if price_inst and inst_text:
-        installment_info = f"\n💳 *Parcelado:* {inst_text} (Total: R$ {price_inst:.2f})".replace(".", ",")
-
-    message = (
-        f"{header_tag}\n\n"
-        f"📦 *{title}*\n"
-        f"🏪 *Loja:* {product.get('name')}\n"
-        f"💰 *À vista:* R$ {price_cash:.2f}".replace(".", ",") + f"{installment_info}"
-        f"{discount_tag}\n"
-        f"🎯 *Preço Alvo:* R$ {target:.2f}".replace(".", ",") +
-        f"{coupons_text}\n\n"
-        f"🔗 [Ir para a Oferta]({url})"
-    )
-
-    telegram_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": message,
-        "parse_mode": "Markdown",
-        "disable_web_page_preview": False
-    }
-
-    try:
-        resp = requests.post(telegram_url, json=payload, timeout=10)
-        if resp.status_code == 200:
-            log.info("Alerta enviado com sucesso para %s", product.get("name"))
-            return True
-        log.error("Falha ao enviar mensagem no Telegram: %s", resp.text)
-    except Exception as exc:
-        log.error("Erro ao conectar com a API do Telegram: %s", exc)
-
-    return False
+def build_alert_message(product: dict, snap, decision) -> str:
+    e = html.escape
+    lines = [f"🔥 <b>{e(product['name'])}</b>"]
+    if product.get("variations"):
+        lines.append(f"📐 Variação: <b>{e(' / '.join(product['variations']))}</b> — ✅ em estoque")
+    lines.append("")
+    lines.append(f"💰 À vista: <b>{_brl(snap.price_cash)}</b>  (alvo: {_brl(product['target_price'])})")
+    if snap.price_installment:
+        lines.append(f"💳 Parcelado: {_brl(snap.price_installment)} ({e(snap.installment_text or '')})")
+    if decision.avg_price:
+        lines.append(
+            f"📊 Média {decision.samples} leituras: {_brl(decision.avg_price)} | "
+            f"mínima: {_brl(decision.min_price)}"
+        )
+    if decision.discount_vs_avg_pct is not None:
+        lines.append(f"📉 <b>{decision.discount_vs_avg_pct:.1f}% abaixo da média</b> (desconto real)")
+    if decision.suspicious_drop:
+        lines.append("⚠️ Queda muito grande: confira se não é erro de leitura (ou erro de preço da loja!)")
+    if snap.coupons:
+        lines.append("")
+        lines.append("🎟️ <b>Cupons/banners na página:</b>")
+        for c in snap.coupons:
+            lines.append(f"• {e(c)}")
+    lines.append("")
+    lines.append(f'🔗 <a href="{e(product["url"], quote=True)}">Abrir produto</a>')
+    return "\n".join(lines)
