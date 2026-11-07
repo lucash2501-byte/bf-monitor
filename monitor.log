@@ -1,0 +1,57 @@
+2026-11-06 23:25:08,150 | INFO    | Rodada iniciada: 3 produto(s)
+2026-11-06 23:25:12,511 | WARNING | Tênis Exemplo Corrida: tentativa 1/3 falhou (Error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.exemplo-loja.com.br/tenis-exemplo-corrida/p
+Call log:
+  - navigating to "https://www.exemplo-loja.com.br/tenis-exemplo-corrida/p", waiting until "domcontentloaded"
+). Aguardando 2.8s
+2026-11-06 23:25:15,331 | WARNING | Tênis Exemplo Corrida: tentativa 2/3 falhou (Error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.exemplo-loja.com.br/tenis-exemplo-corrida/p
+Call log:
+  - navigating to "https://www.exemplo-loja.com.br/tenis-exemplo-corrida/p", waiting until "domcontentloaded"
+). Aguardando 5.3s
+2026-11-06 23:25:20,736 | WARNING | Tênis Exemplo Corrida: tentativa 3/3 falhou (Error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.exemplo-loja.com.br/tenis-exemplo-corrida/p
+Call log:
+  - navigating to "https://www.exemplo-loja.com.br/tenis-exemplo-corrida/p", waiting until "domcontentloaded"
+). Aguardando 9.1s
+2026-11-06 23:25:29,918 | WARNING | [Tênis Exemplo Corrida] erro: Error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.exemplo-loja.com.br/tenis-exemplo-corrida/p
+Call log:
+  - navigating to "https://www.exemplo-loja.com.br/tenis-exemplo-corrida/p", waiting until "domcontentloaded"
+
+2026-11-06 23:25:35,230 | WARNING | Smartphone Exemplo 128GB: tentativa 1/3 falhou (Error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.outra-loja.com.br/smartphone-exemplo/p
+Call log:
+  - navigating to "https://www.outra-loja.com.br/smartphone-exemplo/p", waiting until "domcontentloaded"
+). Aguardando 2.0s
+2026-11-06 23:25:37,293 | WARNING | Smartphone Exemplo 128GB: tentativa 2/3 falhou (Error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.outra-loja.com.br/smartphone-exemplo/p
+Call log:
+  - navigating to "https://www.outra-loja.com.br/smartphone-exemplo/p", waiting until "domcontentloaded"
+). Aguardando 4.9s
+2026-11-06 23:25:42,310 | WARNING | Smartphone Exemplo 128GB: tentativa 3/3 falhou (Error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.outra-loja.com.br/smartphone-exemplo/p
+Call log:
+  - navigating to "https://www.outra-loja.com.br/smartphone-exemplo/p", waiting until "domcontentloaded"
+). Aguardando 8.1s
+2026-11-06 23:25:50,444 | WARNING | [Smartphone Exemplo 128GB] erro: Error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.outra-loja.com.br/smartphone-exemplo/p
+Call log:
+  - navigating to "https://www.outra-loja.com.br/smartphone-exemplo/p", waiting until "domcontentloaded"
+
+2026-11-06 23:25:56,817 | WARNING | Fone Exemplo (sem variação): tentativa 1/3 falhou (Error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.terceira-loja.com.br/fone-exemplo/p
+Call log:
+  - navigating to "https://www.terceira-loja.com.br/fone-exemplo/p", waiting until "domcontentloaded"
+). Aguardando 4.0s
+2026-11-06 23:26:00,887 | WARNING | Fone Exemplo (sem variação): tentativa 2/3 falhou (Error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.terceira-loja.com.br/fone-exemplo/p
+Call log:
+  - navigating to "https://www.terceira-loja.com.br/fone-exemplo/p", waiting until "domcontentloaded"
+). Aguardando 4.4s
+2026-11-06 23:26:05,360 | WARNING | Fone Exemplo (sem variação): tentativa 3/3 falhou (Error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.terceira-loja.com.br/fone-exemplo/p
+Call log:
+  - navigating to "https://www.terceira-loja.com.br/fone-exemplo/p", waiting until "domcontentloaded"
+). Aguardando 8.4s
+2026-11-06 23:26:13,745 | WARNING | [Fone Exemplo (sem variação)] erro: Error: Page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.terceira-loja.com.br/fone-exemplo/p
+Call log:
+  - navigating to "https://www.terceira-loja.com.br/fone-exemplo/p", waiting until "domcontentloaded"
+
+2026-11-06 23:28:14,788 | INFO    | Rodada iniciada: 1 produto(s)
+2026-11-06 23:28:17,069 | WARNING | Tênis Olympikus Corre 4 - Centauro: tentativa 1/3 falhou (Página bloqueada/captcha). Aguardando 3.0s
+2026-11-06 23:28:21,969 | WARNING | Tênis Olympikus Corre 4 - Centauro: tentativa 2/3 falhou (Página bloqueada/captcha). Aguardando 4.3s
+2026-11-06 23:28:28,120 | WARNING | Tênis Olympikus Corre 4 - Centauro: tentativa 3/3 falhou (Página bloqueada/captcha). Aguardando 8.8s
+2026-11-06 23:28:43,768 | WARNING | [Tênis Olympikus Corre 4 - Centauro] erro: Página bloqueada/captcha
+2026-11-06 23:32:43,933 | INFO    | Rodada iniciada: 1 produto(s)
+2026-11-06 23:32:48,800 | INFO    | [Tênis Olympikus Corre 4 - Centauro] à vista R$ 399.90 | parcelado R$ 379.96 | estoque=True | cupons=2
+2026-11-06 23:32:48,800 | INFO    | [Tênis Olympikus Corre 4 - Centauro] sem alerta: Histórico insuficiente (0/8 leituras)
