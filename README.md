@@ -125,7 +125,7 @@ O alerta lista até 6 cupons encontrados na página do produto, nesta ordem de c
 3. **Texto da página** (linhas com "cupom" + percentual, valor ou código; links de menu são ignorados).
 
 **Aviso no Telegram:** além de aparecerem nos alertas de preço, os cupons **novos** de cada loja são enviados numa
-mensagem própria (uma por loja, por rodada, até 8 cupons), sem repetir o mesmo cupom. Ele só reaparece depois de
+mensagem própria (assim que são encontrados, uma por loja, até 8 cupons), sem repetir o mesmo cupom. Ele só reaparece depois de
 `COUPON_RENOTIFY_HOURS` (padrão 168h = 7 dias; `0` = nunca repete). Para desligar, `NOTIFY_COUPONS=false`.
 Para mandar para um **canal** em vez da conversa privada: adicione o bot como administrador do canal e use como
 `TELEGRAM_CHAT_ID` o id do canal (começa com `-100`).

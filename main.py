@@ -197,7 +197,7 @@ MAX_COUPONS_PER_MESSAGE = 8
 
 
 def send_coupon_digest(batch: list[tuple[dict, list[str]]], settings: Settings, notifier: TelegramNotifier) -> int:
-    """Manda uma mensagem por loja com os cupons NOVOS desta rodada. Retorna quantas mensagens foram enviadas."""
+    """Manda uma mensagem por loja com os cupons NOVOS do lote. Retorna quantas mensagens foram enviadas."""
     by_host: dict[str, dict] = {}
     for product, texts in batch:
         entry = by_host.setdefault(store_host(product["url"]),
@@ -240,7 +240,6 @@ def run_cycle(settings: Settings, notifier: TelegramNotifier, only: Optional[str
 
     counts = {"ok": 0, "error": 0, "alert": 0, "crash": 0}
     failing: list[tuple[dict, str]] = []
-    coupon_batch: list[tuple[dict, list[str]]] = []
     with sync_playwright() as pw:
         browser = _launch_browser(pw, settings)
         try:
@@ -254,8 +253,11 @@ def run_cycle(settings: Settings, notifier: TelegramNotifier, only: Optional[str
                         product, snap, settings, notifier,
                         rescrape=lambda p=product, b=browser: scrape_product(b, p, settings),
                     )
-                    if not snap.error and snap.coupons:
-                        coupon_batch.append((product, snap.coupons))
+                    if not snap.error and snap.coupons and settings.notify_coupons and notifier.configured:
+                        try:   # manda na hora (não espera a rodada acabar); cupom já avisado não se repete
+                            send_coupon_digest([(product, snap.coupons)], settings, notifier)
+                        except Exception:  # noqa: BLE001 — falha nos cupons não pode estragar a rodada
+                            log.exception("[%s] erro ao enviar cupons", product["name"])
                     if status == "error" and settings.fail_notice_after and \
                             db.get_consecutive_errors(settings.db_path, product["id"]) == settings.fail_notice_after:
                         failing.append((product, snap.error or ""))
@@ -281,11 +283,6 @@ def run_cycle(settings: Settings, notifier: TelegramNotifier, only: Optional[str
              counts["ok"], counts["error"], counts["alert"], counts["crash"])
     if failing and notifier.configured:
         _send_failure_notice(notifier, failing, settings)
-    if coupon_batch and settings.notify_coupons and notifier.configured:
-        try:
-            send_coupon_digest(coupon_batch, settings, notifier)
-        except Exception:  # noqa: BLE001 — falha nos cupons não pode estragar a rodada
-            log.exception("Erro ao enviar resumo de cupons")
 
 
 def show_stats(settings: Settings) -> None:
