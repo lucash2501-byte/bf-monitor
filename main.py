@@ -1,162 +1,110 @@
-"""Monitor de preços para Black Friday.
+"""Script principal para monitoramento de preços de produtos com Playwright e alertas via Telegram."""
 
-Uso:
-    python main.py                 # loop contínuo
-    python main.py --once          # uma rodada e sai
-    python main.py --test-telegram # envia mensagem de teste
-    python main.py --stats         # resumo do histórico por produto
-"""
-from __future__ import annotations
-
-import argparse
-import json
-import logging
-import random
-import re
-import statistics
+import os
 import sys
 import time
-import unicodedata
+import logging
+from dataclasses import dataclass
+from typing import List, Optional
 
-import analyzer
-import db
-from config import Settings, load_settings
-from notifier import TelegramNotifier, build_alert_message
-from scraper import scrape_product
+from config import load_settings, load_products
+from db import Database
+from scraper import init_browser, scrape_product
+from notifier import send_telegram_alert
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-7s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
 log = logging.getLogger("main")
 
 
-def slugify(text: str) -> str:
-    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
-    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+def run_monitoring_cycle(settings, products: List[dict], db: Database):
+    """Executa um ciclo completo de raspagem e envio de alertas."""
+    log.info("Iniciando rodada de monitoramento para %d produto(s)...", len(products))
+    
+    with init_browser(headless=settings.headless) as page:
+        # Agrupar ofertas por group_id para selecionar o menor preço por produto
+        grouped_snapshots = {}
 
-
-def load_products(path: str) -> list[dict]:
-    with open(path, encoding="utf-8") as f:
-        raw = json.load(f)
-    products = []
-    for item in raw:
-        missing = [k for k in ("name", "url", "target_price") if k not in item]
-        if missing:
-            log.error("Produto ignorado (faltando %s): %s", missing, item)
-            continue
-        var = item.get("variations") or item.get("variation") or []
-        item["variations"] = [var] if isinstance(var, str) else list(var)
-        item["id"] = slugify(item["name"])
-        products.append(item)
-    return products
-
-
-def process_product(product: dict, snap, settings: Settings, notifier: TelegramNotifier) -> None:
-    pid = product["id"]
-    history = db.get_price_history(settings.db_path, pid, settings.history_days)  # antes de salvar a atual
-    db.save_snapshot(settings.db_path, pid, snap)
-
-    if snap.error:
-        log.warning("[%s] erro: %s", product["name"], snap.error)
-        return
-
-    log.info("[%s] à vista R$ %.2f | parcelado %s | estoque=%s | cupons=%d",
-             product["name"], snap.price_cash,
-             f"R$ {snap.price_installment:.2f}" if snap.price_installment else "—",
-             snap.in_stock, len(snap.coupons))
-
-    decision = analyzer.evaluate(product, snap, history, settings)
-    if not decision.alert:
-        log.info("[%s] sem alerta: %s", product["name"], "; ".join(decision.failed))
-        return
-
-    last = db.get_last_alert(settings.db_path, pid)
-    if last and db.hours_since(last["ts"]) < settings.cooldown_hours \
-            and snap.price_cash >= last["price"] * 0.99:
-        log.info("[%s] alerta suprimido (cooldown)", product["name"])
-        return
-
-    if notifier.send(build_alert_message(product, snap, decision)):
-        db.save_alert(settings.db_path, pid, snap.price_cash)
-        log.info("[%s] 🔔 ALERTA ENVIADO", product["name"])
-
-
-def run_cycle(settings: Settings, notifier: TelegramNotifier) -> None:
-    from playwright.sync_api import sync_playwright  # import tardio: facilita testes
-
-    products = load_products(settings.products_path)  # recarrega: pode editar o JSON com o loop rodando
-    if not products:
-        log.error("Nenhum produto válido em %s", settings.products_path)
-        return
-    log.info("Rodada iniciada: %d produto(s)", len(products))
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(
-            headless=settings.headless,
-            args=["--disable-blink-features=AutomationControlled", "--no-sandbox"],
-        )
-        try:
-            for i, product in enumerate(products):
-                snap = scrape_product(browser, product, settings)
-                process_product(product, snap, settings, notifier)
-                if i < len(products) - 1:
-                    time.sleep(random.uniform(3, 8))  # pausa "humana" entre produtos
-        finally:
-            browser.close()
-
-
-def show_stats(settings: Settings) -> None:
-    for p in load_products(settings.products_path):
-        hist = db.get_price_history(settings.db_path, p["id"], settings.history_days)
-        if hist:
-            print(f"{p['name']}: {len(hist)} leituras | média R$ {statistics.mean(hist):.2f} | "
-                  f"mín R$ {min(hist):.2f} | máx R$ {max(hist):.2f} | alvo R$ {p['target_price']:.2f}")
-        else:
-            print(f"{p['name']}: sem histórico ainda")
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Monitor de preços Black Friday")
-    parser.add_argument("--once", action="store_true", help="roda uma vez e sai")
-    parser.add_argument("--test-telegram", action="store_true", help="envia mensagem de teste")
-    parser.add_argument("--stats", action="store_true", help="mostra resumo do histórico")
-    args = parser.parse_args()
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)-7s | %(message)s",
-        handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("monitor.log", encoding="utf-8")],
-    )
-    settings = load_settings()
-    db.init_db(settings.db_path)
-    notifier = TelegramNotifier(settings.telegram_token, settings.telegram_chat_id)
-
-    if args.test_telegram:
-        ok = notifier.send("✅ Monitor Black Friday conectado ao Telegram!")
-        print("Mensagem enviada!" if ok else "Falhou. Verifique TOKEN e CHAT_ID no .env")
-        return 0 if ok else 1
-
-    if args.stats:
-        show_stats(settings)
-        return 0
-
-    if not notifier.configured:
-        log.warning("Telegram NÃO configurado: o histórico será coletado, mas nenhum alerta será enviado.")
-
-    if args.once:
-        run_cycle(settings, notifier)
-        return 0
-
-    log.info("Loop iniciado (a cada ~%.0f min). Ctrl+C para parar.", settings.interval_minutes)
-    try:
-        while True:
+        for product in products:
             try:
-                run_cycle(settings, notifier)
-            except Exception:  # noqa: BLE001 — o loop nunca deve morrer
-                log.exception("Erro inesperado na rodada")
-            sleep_s = settings.interval_minutes * 60 * random.uniform(0.85, 1.15)  # jitter
-            log.info("Próxima rodada em %.1f min", sleep_s / 60)
-            time.sleep(sleep_s)
-    except KeyboardInterrupt:
-        log.info("Encerrado pelo usuário.")
-    return 0
+                log.info("Verificando: %s", product.get("name"))
+                snapshot = scrape_product(page, product, settings)
+                
+                if snapshot and snapshot.price_cash:
+                    # Grava o preço atual no banco de dados SQLite
+                    db.save_price(product["id"], snapshot.price_cash, snapshot.price_installment)
+                    
+                    group_id = product.get("group_id", product["id"])
+                    
+                    if group_id not in grouped_snapshots:
+                        grouped_snapshots[group_id] = []
+                    
+                    grouped_snapshots[group_id].append({
+                        "product": product,
+                        "snapshot": snapshot
+                    })
+
+            except Exception as exc:
+                log.error("Erro ao verificar %s: %s", product.get("name"), exc)
+
+        # Avaliar e enviar alertas para a melhor oferta de cada grupo
+        for group_id, items in grouped_snapshots.items():
+            # Ordena pelo menor preço à vista
+            items.sort(key=lambda x: x["snapshot"].price_cash)
+            best_item = items[0]  # Loja campeã (menor preço)
+            
+            product = best_item["product"]
+            snapshot = best_item["snapshot"]
+            
+            min_price_history = db.get_min_price(product["id"])
+            should_alert = False
+            discount_pct = 0.0
+
+            # Regra 1: Desconto de 10% ou mais em relação ao histórico
+            if min_price_history and min_price_history > 0:
+                if snapshot.price_cash < min_price_history:
+                    discount_pct = ((min_price_history - snapshot.price_cash) / min_price_history) * 100
+                    if discount_pct >= 10.0:
+                        should_alert = True
+
+            # Regra 2: Preço igual ou abaixo do target_price cadastrado
+            target_price = product.get("target_price", 0.0)
+            if target_price > 0 and snapshot.price_cash <= target_price:
+                should_alert = True
+
+            # Regra 3: Alerta inicial sem histórico (se configurado no .env)
+            if settings.allow_alert_without_history and not should_alert:
+                should_alert = True
+
+            if should_alert:
+                send_telegram_alert(
+                    bot_token=settings.telegram_bot_token,
+                    chat_id=settings.telegram_chat_id,
+                    snapshot=snapshot,
+                    product=product,
+                    discount_pct=discount_pct
+                )
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+def main():
+    """Função principal com loop de execução contínua."""
+    settings = load_settings()
+    products = load_products()
+    db = Database(settings.db_path)
+
+    if not products:
+        log.error("Nenhum produto cadastrado no products.json. Encerrando.")
+        sys.exit(1)
+
+    log.info("Serviço de monitoramento iniciado com sucesso.")
+
+    while True:
+        try:
+            run_monitoring_cycle(settings, products, db)
+        except Exception as exc:
+            log.error("Erro na rodada de monitoramento: %s", exc)
+
+        log.info("Pr
