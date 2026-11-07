@@ -144,6 +144,8 @@ O workflow `.github/workflows/monitor.yml` roda o monitor sozinho nos servidores
    - `TELEGRAM_CHAT_ID`: o seu chat id
 2. **Settings → Actions → General → Workflow permissions**: marque **Read and write permissions** e salve.
 3. Aba **Actions**: se pedir, habilite os workflows. Abra **Monitor de preços → Run workflow** para a primeira rodada.
+3b. Para conferir só o Telegram (20 segundos): **Actions → Testar Telegram → Run workflow**. Chega uma mensagem de teste
+   no seu Telegram e o log mostra se os secrets existem.
 4. Abra a rodada para ver o log. No fim, o passo **Resumo do histórico** mostra, por produto, quantas leituras
    válidas e erros houve.
 

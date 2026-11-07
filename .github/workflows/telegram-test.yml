@@ -1,0 +1,33 @@
+name: Testar Telegram
+
+# Rodada rápida (uns 20 segundos) que só manda uma mensagem de teste, sem abrir navegador.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  teste:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      DB_PATH: teste.db
+      LOG_FILE: ""
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Conferir se os secrets existem
+        run: |
+          [ -n "$TELEGRAM_BOT_TOKEN" ] && echo "TELEGRAM_BOT_TOKEN: preenchido (${#TELEGRAM_BOT_TOKEN} caracteres)" || echo "::error::TELEGRAM_BOT_TOKEN está VAZIO ou não existe"
+          [ -n "$TELEGRAM_CHAT_ID" ] && echo "TELEGRAM_CHAT_ID: preenchido" || echo "::error::TELEGRAM_CHAT_ID está VAZIO ou não existe"
+
+      - name: Instalar dependências
+        run: pip install requests python-dotenv
+
+      - name: Enviar mensagem de teste
+        run: python main.py --test-telegram
