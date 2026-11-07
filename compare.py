@@ -190,7 +190,8 @@ def _looks_like_product_link(href: str, search_url: str) -> bool:
     return not re.search(r"/(busca|search|catalogo|categoria|cart|carrinho|login|checkout)(/|$)", path)
 
 
-def search_store(browser, store: dict, product: dict, settings) -> tuple[list[Candidate], Optional[str]]:
+def search_store(browser, store: dict, product: dict, settings,
+                 diag: Optional[dict] = None) -> tuple[list[Candidate], Optional[str]]:
     """Pesquisa o modelo em uma loja. Retorna (candidatos, erro). Uma só tentativa: busca é barata e opcional."""
     query = build_query(product)
     url = _search_url(store, query)
@@ -215,6 +216,12 @@ def search_store(browser, store: dict, product: dict, settings) -> tuple[list[Ca
         if BLOCK_URL_RE.search(page.url):
             return [], "pediu verificação/captcha"
         raw = page.evaluate(JS_RESULTS)
+        if diag is not None:
+            try:
+                diag["title"] = " ".join((page.title() or "").split())[:60]
+            except Exception:  # noqa: BLE001
+                diag["title"] = ""
+            diag["final_url"] = page.url
     except Exception as exc:  # noqa: BLE001
         return [], f"{type(exc).__name__}: {exc}"[:120]
     finally:
@@ -225,6 +232,11 @@ def search_store(browser, store: dict, product: dict, settings) -> tuple[list[Ca
                 pass
 
     best: dict[str, Candidate] = {}
+    links = [it for it in raw if _looks_like_product_link(it.get("href", ""), url)]
+    if diag is not None:
+        diag["raw"] = len(raw)
+        diag["links"] = len(links)
+        diag["titles"] = [" ".join((it.get("title") or "").split())[:50] for it in links[:3]]
     for item in raw:
         href = item.get("href", "")
         if not _looks_like_product_link(href, url):
@@ -345,13 +357,21 @@ def debug_search(browser, query: str, settings) -> list[str]:
     if len(model_tokens(query)) < 2:
         lines.append("Nome genérico demais: use marca + modelo (ex.: 'Nike Pegasus 41 preto').")
     for store in load_stores():
-        cands, err = search_store(browser, store, product, settings)
+        diag: dict = {}
+        cands, err = search_store(browser, store, product, settings, diag)
         if err:
             lines.append(f"  ✗ {store['name']:<22} {err}")
-        elif not cands:
-            lines.append(f"  · {store['name']:<22} sem resultado que bata com o modelo")
-        else:
+            continue
+        if cands:
             for c in cands:
                 cor = {True: "cor ok", False: "cor errada", None: "cor?"}[c.color_ok]
                 lines.append(f"  ✓ {store['name']:<22} {c.title[:60]!r} [{cor}] {c.url[:90]}")
+            continue
+        lines.append(f"  · {store['name']:<22} nenhum resultado bate com o modelo "
+                     f"(a página mostrou {diag.get('links', 0)} produto(s))")
+        lines.append(f"      página: {diag.get('title')!r} | url: {str(diag.get('final_url'))[:100]}")
+        if diag.get("titles"):
+            lines.append(f"      exemplos: {diag['titles']}")
+        elif diag.get("raw", 0) == 0:
+            lines.append("      (nenhum link com preço: a busca não carregou resultados ou o link de busca está errado)")
     return lines

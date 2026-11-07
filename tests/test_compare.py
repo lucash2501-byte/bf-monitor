@@ -129,6 +129,12 @@ def test_debug_search_report(browser, base_url, tmp_path, monkeypatch):  # noqa:
     assert "✓ loja-b.com" in text and "✗ morta.com" in text and "HTTP 404" in text
 
 
+def test_debug_search_explains_empty_results(browser, base_url, monkeypatch):  # noqa: F811
+    monkeypatch.setattr(compare, "load_stores", lambda path=None: [fake_store(base_url)])
+    text = "\n".join(compare.debug_search(browser, "Nike Air Zoom Vomero 99 Rosa", make_settings()))
+    assert "nenhum resultado bate" in text and "a página mostrou" in text and "exemplos:" in text and "Pegasus" in text
+
+
 def main_snap(price):
     from scraper import Snapshot
     return Snapshot(price_cash=price, in_stock=True)

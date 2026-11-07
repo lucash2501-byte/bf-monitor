@@ -1,6 +1,6 @@
 [
   {"name": "dafiti.com.br",        "url": "https://www.dafiti.com.br/catalogo/?q={q}"},
-  {"name": "kanui.com.br",         "url": "https://www.kanui.com.br/catalogo/?q={q}"},
+  {"name": "kanui.com.br",         "url": "https://www.kanui.com.br/catalog/?q={q}"},
   {"name": "artwalk.com.br",       "url": "https://www.artwalk.com.br/{q_path}?_q={q_path}&map=ft"},
   {"name": "underarmour.com.br",   "url": "https://www.underarmour.com.br/{q_path}?_q={q_path}&map=ft"},
   {"name": "newbalance.com.br",    "url": "https://www.newbalance.com.br/{q_path}?_q={q_path}&map=ft"},
