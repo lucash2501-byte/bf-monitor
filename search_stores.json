@@ -7,7 +7,6 @@
   {"name": "mizuno.com.br", "url": "https://www.mizuno.com.br/{q_path}?_q={q_path}&map=ft"},
   {"name": "olympikus.com.br", "url": "https://www.olympikus.com.br/{q_path}?_q={q_path}&map=ft"},
   {"name": "lojasrenner.com.br", "url": "https://www.lojasrenner.com.br/busca?q={q}"},
-  {"name": "paga1leva2.com.br", "urls": ["https://www.paga1leva2.com.br/busca?q={q}", "https://www.paga1leva2.com.br/search?q={q}", "https://www.paga1leva2.com.br/catalogsearch/result/?q={q}", "https://www.paga1leva2.com.br/{q_path}?_q={q_path}&map=ft"]},
   {"name": "centauro.com.br", "url": "https://www.centauro.com.br/search?q={q}"},
   {"name": "netshoes.com.br", "url": "https://www.netshoes.com.br/busca?q={q}"},
   {"name": "zattini.com.br", "url": "https://www.zattini.com.br/busca?q={q}"},

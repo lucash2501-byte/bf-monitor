@@ -50,6 +50,15 @@ COLOR_OF_WORD = {w: c for c, ws in COLORS.items() for w in ws}
 
 MIN_SCORE = 0.85
 
+# Itens de outra categoria que costumam aparecer na busca pelo nome do modelo ("Meia Corre 4" não é o tênis
+# "Corre 4"). Se o título tem uma dessas palavras e o SEU produto não, o resultado é descartado.
+OTHER_CATEGORY_WORDS = {
+    "meia", "meias", "cadarco", "cadarcos", "palmilha", "palmilhas", "camiseta", "camisetas", "regata", "bone",
+    "viseira", "mochila", "bolsa", "pochete", "shorts", "short", "bermuda", "calca", "legging", "jaqueta",
+    "moletom", "blusa", "casaco", "munhequeira", "joelheira", "garrafa", "kit", "cueca", "sunga", "maio",
+    "chinelo", "sandalia", "chuteira", "relogio", "oculos", "luva", "luvas", "protetor",
+}
+
 JS_RESULTS = """
 () => {
   const out = [], seen = new Set();
@@ -150,6 +159,9 @@ def score_result(product: dict, title: str, href: str, card: str = "") -> Option
     hit = sum(1 for t in rest if t in pool)
     score = hit / len(rest)
     if score < MIN_SCORE:
+        return None
+    mine = set(words(product.get("name") or ""))
+    if (OTHER_CATEGORY_WORDS & set(words(title))) - mine:   # só o título: o slug/cartão trazem mais ruído
         return None
     ident = found                           # cor/gênero/infantil só do título+link (o card traz muito ruído)
     if not (KIDS_WORDS & set(words(product.get("name") or ""))) and KIDS_WORDS & ident:

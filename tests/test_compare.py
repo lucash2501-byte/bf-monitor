@@ -25,6 +25,8 @@ def test_query_uses_model_number_and_color():
     ("Tênis Infantil Nike Pegasus 41 Preto", "https://l.com/x/p", False),        # infantil
     ("Tênis Nike Pegasus 41 Preto Feminino", "https://l.com/x/p", False),        # outro gênero
     ("Tênis Nike Revolution 7 Preto", "https://l.com/x/p", False),               # outro modelo
+    ("Meia Nike Pegasus 41 Preto Masculino", "https://l.com/x/p", False),        # acessório, não o tênis
+    ("Camiseta Nike Pegasus 41 Preto Masculino", "https://l.com/x/p", False),    # outra categoria
     ("Nike Pegasus 41", "https://l.com/nike-pegasus-41-black/p", True),          # cor só no link/inglês: aceita
 ])
 def test_score_result_matches_same_model_only(title, href, expected):
@@ -158,3 +160,10 @@ def test_search_store_reads_name_from_card_when_link_is_only_an_image(browser, b
     cands, err = compare.search_store(browser, store, PRODUCT, make_settings())
     assert err is None and [c.url.rsplit("/", 2)[1] for c in cands] == ["12345"]
     assert cands[0].title == "Tênis Nike Pegasus 41 Preto Masculino"
+
+
+def test_other_category_allowed_when_the_product_itself_is_that_category():
+    sock = {"name": "Meia Olympikus Corre 4 Preta", "url": "https://l.com/p", "target_price": 10}
+    assert compare.score_result(sock, "Meia Corre 4 Olympikus Preta", "https://l.com/meia-corre-4/p") is not None
+    shoe = {"name": "Tênis Olympikus Corre 4 Preto", "url": "https://l.com/p", "target_price": 10}
+    assert compare.score_result(shoe, "Meia Corre 4 Olympikus", "https://l.com/meia-corre-4/p") is None
