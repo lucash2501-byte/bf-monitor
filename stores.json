@@ -21,5 +21,6 @@
   {"name": "Shein", "urls": ["https://br.shein.com/"]},
   {"name": "Guess Brasil", "urls": ["https://www.guessbrasil.com.br/"]},
   {"name": "Morena Rosa", "urls": ["https://www.morenarosa.com.br/"]},
-  {"name": "Hugo Boss", "urls": ["https://www.hugoboss.com.br/"]}
+  {"name": "Hugo Boss", "urls": ["https://www.hugoboss.com.br/"]},
+  {"name": "Zara", "urls": ["https://www.zara.com/br/"]}
 ]
