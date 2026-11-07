@@ -66,7 +66,11 @@ JS_RESULTS = """
     const text = (card.innerText || '');
     if (!priceRe.test(text) || text.length > 700) continue;
     const img = a.querySelector('img');
-    const title = (a.getAttribute('title') || a.getAttribute('aria-label') || (img && img.alt) || a.innerText || '').trim();
+    let title = (a.getAttribute('title') || a.getAttribute('aria-label') || (img && img.alt) || a.innerText || '').trim();
+    if (title.length < 12) {
+      const line = text.split('\\n').map(t => t.trim()).find(t => t.length >= 12 && !/R\\$|%|^ou /i.test(t));
+      if (line) title = line;
+    }
     seen.add(href);
     out.push({href, title: title.slice(0, 200), card: text.slice(0, 400)});
     if (out.length >= 120) break;
@@ -140,9 +144,10 @@ def score_result(product: dict, title: str, href: str, card: str = "") -> Option
     slug = urlparse(href).path
     found = set(words(" ".join([title, slug])))
     card_words = set(words(card))
-    if any(n not in found and n not in card_words for n in nums):   # número do modelo (11 != 10) tem que bater
+    if any(n not in found and (n not in card_words or len(card) > 400) for n in nums):   # número do modelo (11 != 10) tem que bater
         return None
-    hit = sum(1 for t in rest if t in found)
+    pool = found | card_words if len(card) <= 400 else found
+    hit = sum(1 for t in rest if t in pool)
     score = hit / len(rest)
     if score < MIN_SCORE:
         return None
@@ -172,7 +177,7 @@ def load_stores(path: str = STORES_PATH) -> list[dict]:
     except (OSError, ValueError) as exc:
         log.error("Não consegui ler %s: %s", path, exc)
         return []
-    return [s for s in data if isinstance(s, dict) and s.get("name") and s.get("url")]
+    return [s for s in data if isinstance(s, dict) and s.get("name") and (s.get("url") or s.get("urls"))]
 
 
 def _search_url(store: dict, query: str) -> str:
@@ -191,6 +196,19 @@ def _looks_like_product_link(href: str, search_url: str) -> bool:
 
 
 def search_store(browser, store: dict, product: dict, settings,
+                 diag: Optional[dict] = None) -> tuple[list[Candidate], Optional[str]]:
+    """Pesquisa o modelo em uma loja. A loja pode ter vários formatos de link (`urls`): tenta o próximo só em 404
+    (403 é bloqueio de IP e os outros links também bloqueariam)."""
+    templates = store.get("urls") or [store["url"]]
+    cands, err = [], None
+    for tmpl in templates:
+        cands, err = _search_once(browser, {**store, "url": tmpl}, product, settings, diag)
+        if err != "HTTP 404":
+            break
+    return cands, err
+
+
+def _search_once(browser, store: dict, product: dict, settings,
                  diag: Optional[dict] = None) -> tuple[list[Candidate], Optional[str]]:
     """Pesquisa o modelo em uma loja. Retorna (candidatos, erro). Uma só tentativa: busca é barata e opcional."""
     query = build_query(product)
@@ -367,6 +385,8 @@ def debug_search(browser, query: str, settings) -> list[str]:
                 cor = {True: "cor ok", False: "cor errada", None: "cor?"}[c.color_ok]
                 lines.append(f"  ✓ {store['name']:<22} {c.title[:60]!r} [{cor}] {c.url[:90]}")
             continue
+        if store.get("urls"):
+            lines.append(f"      (link de busca que respondeu: {str(diag.get('final_url'))[:110]})")
         lines.append(f"  · {store['name']:<22} nenhum resultado bate com o modelo "
                      f"(a página mostrou {diag.get('links', 0)} produto(s))")
         lines.append(f"      página: {diag.get('title')!r} | url: {str(diag.get('final_url'))[:100]}")

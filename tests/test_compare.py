@@ -49,7 +49,7 @@ def test_search_url_templates():
 
 def test_repo_store_list_is_valid():
     stores = compare.load_stores()
-    assert len(stores) >= 10 and all("{q" in s["url"] for s in stores)
+    assert len(stores) >= 10 and all("{q" in (s.get("url") or "".join(s["urls"])) for s in stores)
 
 
 # ------------------------------------------------------------------ com Chromium e lojas falsas
@@ -138,3 +138,23 @@ def test_debug_search_explains_empty_results(browser, base_url, monkeypatch):  #
 def main_snap(price):
     from scraper import Snapshot
     return Snapshot(price_cash=price, in_stock=True)
+
+
+def test_store_tries_next_link_only_on_404(browser, base_url):  # noqa: F811
+    store = {"name": "loja-b.com", "urls": [f"{base_url}/nao-existe.html?q={{q}}", f"{base_url}/search_results.html?q={{q}}"]}
+    cands, err = compare.search_store(browser, store, PRODUCT, make_settings())
+    assert err is None and len(cands) == 1
+
+
+def test_image_only_links_use_card_text_as_title():
+    card = "Tênis Nike Pegasus 41 Preto\nR$ 399,90"
+    assert compare.score_result(PRODUCT, "", "https://l.com/produto/12345/p", card) is not None
+    other = "Tênis Nike Pegasus 40 Preto\nR$ 399,90"
+    assert compare.score_result(PRODUCT, "", "https://l.com/produto/12345/p", other) is None
+
+
+def test_search_store_reads_name_from_card_when_link_is_only_an_image(browser, base_url):  # noqa: F811
+    store = {"name": "loja-c.com", "url": f"{base_url}/search_image_links.html?q={{q}}"}
+    cands, err = compare.search_store(browser, store, PRODUCT, make_settings())
+    assert err is None and [c.url.rsplit("/", 2)[1] for c in cands] == ["12345"]
+    assert cands[0].title == "Tênis Nike Pegasus 41 Preto Masculino"
