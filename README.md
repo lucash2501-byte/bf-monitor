@@ -9,12 +9,14 @@ confere o estoque da sua variação/tamanho e avisa no Telegram com os cupons en
 .
 ├── main.py          # loop principal / CLI
 ├── scraper.py       # Playwright: preço, parcelado, estoque da variação, cupons
+├── coupons.py       # lê cupons publicados pela loja (API interna / estado da página)
 ├── analyzer.py      # regras de alerta (alvo + estoque + desconto real)
 ├── notifier.py      # Telegram
 ├── db.py            # SQLite (histórico de preços e alertas)
 ├── config.py        # lê o .env
 ├── products.json    # SUA LISTA de produtos
 ├── .env.example     # copie para .env
+├── deploy/          # serviço systemd (VPS) e script .bat (Windows)
 ├── tests/           # testes automáticos (lojas falsas locais + Chromium real)
 └── requirements.txt
 ```
@@ -108,6 +110,31 @@ de 1% desde o último alerta.
 
 ⚠️ **Comece a rodar agora!** A Black Friday 2026 é em 27/11. Sem histórico anterior o app não consegue
 desmascarar a "metade do dobro" — por isso o alerta só dispara depois de coletar leituras suficientes.
+
+## Cupons
+
+O alerta lista até 6 cupons encontrados na página do produto, nesta ordem de confiança:
+
+1. **Dados estruturados da loja**: respostas JSON (XHR/fetch) que a própria página recebe e o estado
+   embutido (`__NEXT_DATA__`, `__INITIAL_STATE__`...). Trazem código, descrição e validade. Cupons vencidos
+   ou inativos são descartados, e um campo genérico `code` só conta dentro de algo ligado a cupom/promo,
+   para não confundir com código de país ou de tracking.
+2. **Seletor `selectors.coupon`**, se você configurou.
+3. **Texto da página** (linhas com "cupom" + percentual, valor ou código; links de menu são ignorados).
+
+O monitor só lê o que a loja **publica**. Ele não adivinha códigos nem testa cupons no carrinho. Cupons de
+e-mail, de primeira compra ou ligados à sua conta só aparecem se a loja os mostrar na página. Trate a lista como
+sugestão: confirme no carrinho antes de contar com o desconto.
+
+## Deixar rodando 24h
+
+O histórico só existe enquanto o monitor está ligado, então ele precisa ficar ativo até a Black Friday.
+
+- **Linux / VPS / Raspberry Pi:** `deploy/bf-monitor.service` (systemd). Ajuste `User` e os caminhos, copie para
+  `/etc/systemd/system/` e rode `sudo systemctl enable --now bf-monitor`. Reinicia sozinho se cair e volta com a máquina.
+- **Windows:** `deploy/run_windows.bat` reinicia o monitor se ele parar. Ponha um atalho em `shell:startup` e
+  desative a suspensão do PC (Configurações > Energia) para o notebook não dormir.
+- **macOS:** `caffeinate -i python main.py` impede o Mac de dormir enquanto o monitor roda.
 
 ## Rodando em servidor / Docker
 

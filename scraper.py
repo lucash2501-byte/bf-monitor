@@ -20,7 +20,10 @@ import random
 import re
 import time
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Any, Optional
+
+from coupons import Coupon, dedupe, extract_coupons, extract_from_json_text
 
 log = logging.getLogger("scraper")
 
@@ -256,6 +259,24 @@ JS_COUPON_LINES = r"""
 }
 """
 
+JS_EMBEDDED_JSON = r"""
+() => {
+  const out = [];
+  for (const e of document.querySelectorAll('script#__NEXT_DATA__, script[type="application/json"]')) {
+    const t = e.textContent || '';
+    if (t.length > 3 && t.length <= 2000000 && /(cupom|cupon|coupon|voucher|promo)/i.test(t)) out.push(t);
+    if (out.length >= 10) break;
+  }
+  for (const k of ['__INITIAL_STATE__', '__PRELOADED_STATE__', '__APOLLO_STATE__', '__NUXT__']) {
+    try {
+      const v = window[k];
+      if (v) { const t = JSON.stringify(v); if (t.length <= 2000000 && /(cupom|cupon|coupon|voucher|promo)/i.test(t)) out.push(t); }
+    } catch (e) {}
+  }
+  return out;
+}
+"""
+
 # esconde os sinais mais óbvios de automação (uso pessoal, em intervalos razoáveis)
 STEALTH_JS = """
 Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
@@ -270,8 +291,20 @@ def _is_useful_coupon(line: str) -> bool:
     return bool(COUPON_USEFUL_RE.search(line) or COUPON_CODE_RE.search(line))
 
 
-def _extract_coupons(page, selectors: dict) -> list[str]:
-    found: list[str] = []
+def _extract_coupons(page, selectors: dict, api_coupons: Optional[list[Coupon]] = None) -> list[str]:
+    """Cupons estruturados (API/estado embutido) primeiro; depois texto da página. Máx. 6, sem repetição."""
+    structured: list[Coupon] = list(api_coupons or [])
+    try:
+        for blob in page.evaluate(JS_EMBEDDED_JSON):
+            structured += extract_from_json_text(blob, source="página")
+    except Exception:  # noqa: BLE001
+        pass
+    structured = dedupe(structured)
+    structured.sort(key=lambda c: (c.valid_until is None, c.valid_until or date.max))
+
+    found: list[str] = [c.format() for c in structured[:4]]
+    codes = {c.code.lower() for c in structured}
+
     sel = selectors.get("coupon")
     if sel:  # seletor explícito do usuário: confia no que ele apontou
         for el in page.query_selector_all(sel)[:5]:
@@ -287,10 +320,13 @@ def _extract_coupons(page, selectors: dict) -> list[str]:
     seen, unique = set(), []
     for c in found:
         k = c.lower()
-        if k not in seen:
-            seen.add(k)
-            unique.append(c)
-    return unique[:4]
+        if k in seen:
+            continue
+        if any(code in k for code in codes) and c not in found[:len(structured[:4])]:
+            continue  # linha de texto que só repete um cupom estruturado já listado
+        seen.add(k)
+        unique.append(c)
+    return unique[:6]
 
 
 def _check_variation(page, variant: str, selectors: dict) -> Optional[bool]:
@@ -303,7 +339,7 @@ def _check_variation(page, variant: str, selectors: dict) -> Optional[bool]:
     return r["available"] > 0
 
 
-def _extract_snapshot(page, product: dict) -> Snapshot:
+def _extract_snapshot(page, product: dict, api_coupons: Optional[list[Coupon]] = None) -> Snapshot:
     snap = Snapshot()
     selectors = product.get("selectors", {}) or {}
     try:
@@ -384,8 +420,29 @@ def _extract_snapshot(page, product: dict) -> Snapshot:
         else:
             snap.in_stock = None
 
-    snap.coupons = _extract_coupons(page, selectors)
+    snap.coupons = _extract_coupons(page, selectors, api_coupons)
     return snap
+
+
+MAX_API_BODY = 1_500_000
+
+
+def _collect_api_coupons(response, acc: list[Coupon]) -> None:
+    """Lê respostas JSON (XHR/fetch) que a página recebe e guarda os cupons que a loja publicou nelas."""
+    try:
+        if response.request.resource_type not in ("xhr", "fetch") or response.status != 200:
+            return
+        if "json" not in (response.headers.get("content-type") or "").lower():
+            return
+        if len(acc) >= 50:
+            return
+        body = response.text()
+        if len(body) > MAX_API_BODY or not re.search(r"(cupom|cupon|coupon|voucher|promo)", body, re.I):
+            return
+        host = response.url.split("/")[2] if "//" in response.url else ""
+        acc.extend(extract_from_json_text(body, source=host))
+    except Exception:  # noqa: BLE001 — resposta pode ter sido descartada pela navegação; ignorar
+        pass
 
 
 def _user_agent(browser) -> str:
@@ -436,6 +493,8 @@ def scrape_product(browser, product: dict, settings) -> Snapshot:
             )
             page = context.new_page()
             page.set_default_timeout(settings.page_timeout_ms)
+            api_coupons: list[Coupon] = []
+            page.on("response", lambda r, acc=api_coupons: _collect_api_coupons(r, acc))
             response = page.goto(product["url"], wait_until="domcontentloaded")
             status = response.status if response else None
 
@@ -452,7 +511,7 @@ def scrape_product(browser, product: dict, settings) -> Snapshot:
                     pass  # muitos sites nunca ficam "idle"; seguimos
                 page.mouse.wheel(0, 900)
                 page.wait_for_timeout(1200)
-                snap = _extract_snapshot(page, product)
+                snap = _extract_snapshot(page, product, api_coupons)
                 if snap.error is None and snap.price_cash is None:
                     snap.error = "Preço não encontrado (configure 'selectors.price' no products.json)"
                 if snap.error is None:

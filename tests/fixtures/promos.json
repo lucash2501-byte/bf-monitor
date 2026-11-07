@@ -1,0 +1,13 @@
+{
+  "country": {"code": "BRASIL", "name": "Brasil"},
+  "promotions": {
+    "coupons": [
+      {"code": "BLACK10", "description": "10% OFF em calçados", "validUntil": "2099-12-31"},
+      {"code": "VELHO20", "description": "Cupom já vencido", "validUntil": "2020-01-01"},
+      {"code": "INATIVO1", "description": "Desativado", "active": false},
+      {"couponCode": "FRETE15", "percentage": 15}
+    ],
+    "vouchers": ["PIX5OFF", "ab"]
+  },
+  "tracking": {"campaign": "bf2026", "id": "ABCD1234"}
+}

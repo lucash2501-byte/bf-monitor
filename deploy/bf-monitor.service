@@ -1,0 +1,23 @@
+# Serviço systemd para VPS / Raspberry Pi (Linux). Mantém o monitor ligado e reinicia se cair.
+#
+# Instalação (ajuste User e os caminhos abaixo):
+#   sudo cp deploy/bf-monitor.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now bf-monitor
+#   journalctl -u bf-monitor -f        # acompanhar o log
+[Unit]
+Description=Monitor de precos Black Friday
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/bf-monitor
+ExecStart=/home/ubuntu/bf-monitor/.venv/bin/python main.py
+Restart=always
+RestartSec=30
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

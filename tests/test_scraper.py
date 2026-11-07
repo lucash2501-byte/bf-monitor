@@ -113,3 +113,20 @@ def test_unreachable_host_returns_error_instead_of_raising(browser):
 def test_debug_dump_written_on_failure(browser, base_url, tmp_path):
     scrape(browser, base_url, "no_price.html", debug_dir=str(tmp_path / "dbg"))
     assert (tmp_path / "dbg" / "t.png").exists() and (tmp_path / "dbg" / "t.html").exists()
+
+
+# ------------------------------------------------------------------ cupons estruturados
+def test_coupons_from_internal_api_response(browser, base_url):
+    s = scrape(browser, base_url, "coupons_api.html")
+    assert s.error is None and s.price_cash == 299.90
+    text = " | ".join(s.coupons)
+    assert "BLACK10 — 10% OFF em calçados (válido até 31/12/2099)" in text
+    assert "FRETE15 — 15% de desconto" in text and "PIX5OFF" in text
+    for fake in ("VELHO20", "INATIVO1", "BRASIL", "ABCD1234", "bf2026"):
+        assert fake not in text            # vencido, inativo, país e tracking não são cupons
+    assert len(s.coupons) <= 6
+
+
+def test_coupons_from_embedded_page_state(browser, base_url):
+    s = scrape(browser, base_url, "coupons_embedded.html")
+    assert s.coupons == ["BEMVINDO — Cupom de boas-vindas (válido até 31/12/2099)"]   # "user.codigo" ignorado
