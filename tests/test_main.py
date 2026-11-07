@@ -207,3 +207,16 @@ def test_coupon_message_escapes_html():
     from notifier import build_coupon_message
     msg = build_coupon_message("loja.com", ["<b>10%</b> & mais"], "https://l.com/p?a=1&b=2", "Tênis <X>")
     assert "&lt;b&gt;10%&lt;/b&gt; &amp; mais" in msg and "a=1&amp;b=2" in msg and "Tênis &lt;X&gt;" in msg
+
+
+def test_failure_notice_is_grouped_by_store(settings):
+    n = FakeNotifier()
+    failing = [({"name": f"ML {i}", "url": "https://www.mercadolivre.com.br/p"}, "Bloqueado pela loja: pediu verificação/captcha (x)")
+               for i in range(5)]
+    failing.append(({"name": "Tênis <X>", "url": "https://www.netshoes.com.br/p"}, "HTTP 403 (possível bloqueio anti-bot)"))
+    main._send_failure_notice(n, failing, settings)
+    msg = n.sent[0]
+    assert "6 produto(s)" in msg
+    assert "<b>mercadolivre.com.br</b> (5)" in msg and "e mais 2" in msg and "verificação/captcha" in msg
+    assert "<b>netshoes.com.br</b> (1)" in msg and "HTTP 403" in msg and "Tênis &lt;X&gt;" in msg
+    assert msg.count("•") == 2          # uma linha por loja, não por produto

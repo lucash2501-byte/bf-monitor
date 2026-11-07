@@ -155,16 +155,33 @@ def _launch_browser(pw, settings: Settings):
     )
 
 
+def _failure_cause(error: str) -> str:
+    """Resume o erro numa causa curta para agrupar produtos da mesma loja."""
+    first = (error or "erro desconhecido").splitlines()[0]
+    if first.startswith("Bloqueado pela loja"):
+        return "a loja pede verificação/captcha (bloqueio deste IP)"
+    if first.startswith("HTTP 403"):
+        return "a loja bloqueia o acesso (HTTP 403)"
+    if first.startswith("Preço não encontrado"):
+        return "preço não encontrado na página"
+    return first.split(" | ")[0][:80]
+
+
 def _send_failure_notice(notifier: TelegramNotifier, failing: list[tuple[dict, str]], settings: Settings) -> None:
+    """Um aviso só, agrupado por loja (em vez de uma linha por produto)."""
     e = html.escape
+    groups: dict[tuple[str, str], list[str]] = {}
+    for product, error in failing:
+        groups.setdefault((store_host(product["url"]), _failure_cause(error)), []).append(product["name"])
     lines = [f"⚠️ <b>Não consigo ler o preço de {len(failing)} produto(s)</b> "
-             f"({settings.fail_notice_after} tentativas seguidas):"]
-    for product, error in failing[:15]:
-        short = (error or "erro desconhecido").splitlines()[0][:90]
-        lines.append(f"• {e(product['name'])} — {e(short)}")
+             f"({settings.fail_notice_after} tentativas seguidas):", ""]
+    for (host, cause), names in sorted(groups.items(), key=lambda kv: -len(kv[1])):
+        shown = ", ".join(names[:3]) + (f" e mais {len(names) - 3}" if len(names) > 3 else "")
+        lines.append(f"• <b>{e(host)}</b> ({len(names)}): {e(cause)}")
+        lines.append(f"   {e(shown)}")
     lines.append("")
-    lines.append("Sem leitura não há alerta. Ajuste <code>selectors</code> no products.json "
-                 "(use DEBUG_DIR no .env para salvar screenshot/HTML da página).")
+    lines.append("Sem leitura não há alerta. Bloqueio por IP não se resolve pelo código; "
+                 "erro de preço pode ser ajustado com <code>selectors</code> no products.json.")
     notifier.send("\n".join(lines))
 
 

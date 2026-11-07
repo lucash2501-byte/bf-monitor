@@ -130,3 +130,10 @@ def test_coupons_from_internal_api_response(browser, base_url):
 def test_coupons_from_embedded_page_state(browser, base_url):
     s = scrape(browser, base_url, "coupons_embedded.html")
     assert s.coupons == ["BEMVINDO — Cupom de boas-vindas (válido até 31/12/2099)"]   # "user.codigo" ignorado
+
+
+def test_verification_redirect_is_reported_as_block_without_retries(browser, base_url):
+    """Mercado Livre/Shopee redirecionam para /account-verification ou /verify: erro claro e sem insistir."""
+    s = scrape(browser, base_url, "ml_redirect.html", max_retries=3)
+    assert s.price_cash is None
+    assert s.error.startswith("Bloqueado pela loja") and "account-verification" in s.error

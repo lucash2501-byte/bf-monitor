@@ -22,6 +22,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Any, Optional
+from urllib.parse import urlparse
 
 from coupons import Coupon, dedupe, extract_coupons, extract_from_json_text
 
@@ -40,6 +41,8 @@ COUPON_USEFUL_RE = re.compile(r"(\d+\s*%|R\$\s*\d)")
 OUT_OF_STOCK_RE = re.compile(
     r"(produto indispon[ií]vel|esgotado|avise-?me quando|indispon[ií]vel no momento|sem estoque)", re.I
 )
+# a loja redirecionou para uma tela de verificação/captcha (Mercado Livre: /gz/account-verification, Shopee: /verify/...)
+BLOCK_URL_RE = re.compile(r"(account-verification|/verify/|captcha|/challenge)", re.I)
 BLOCK_RE = re.compile(r"(captcha|access denied|verify you are human|unusual traffic|acesso negado)", re.I)
 
 
@@ -512,6 +515,12 @@ def scrape_product(browser, product: dict, settings) -> Snapshot:
                 page.mouse.wheel(0, 900)
                 page.wait_for_timeout(1200)
                 snap = _extract_snapshot(page, product, api_coupons)
+                if snap.error is None and snap.price_cash is None and BLOCK_URL_RE.search(page.url):
+                    _dump_debug(page, product, settings)
+                    parsed = urlparse(page.url)
+                    # repetir não adianta (a loja bloqueou este IP) e só insiste no bloqueio: falha direto
+                    return Snapshot(error=f"Bloqueado pela loja: pediu verificação/captcha "
+                                          f"({parsed.netloc}{parsed.path[:40]})")
                 if snap.error is None and snap.price_cash is None:
                     try:
                         title = " ".join((page.title() or "").split())[:70]
