@@ -35,12 +35,17 @@ def load_stores(path: str = STORES_PATH) -> list[dict]:
         urls = item.get("urls") or ([item["url"]] if item.get("url") else [])
         urls = [u for u in urls if isinstance(u, str) and u.startswith(("http://", "https://"))]
         if urls:
-            out.append({"name": item["name"], "urls": urls})
+            entry = {"name": item["name"], "urls": urls}
+            if item.get("label"):          # cupom vindo de agregador: chave própria, para não misturar lojas
+                entry["label"] = str(item["label"])
+            out.append(entry)
     return out
 
 
-def scrape_store_coupons(browser, url: str, settings) -> tuple[list[str], Optional[str]]:
-    """Lê os cupons de UMA página. Retorna (cupons, erro). Uma tentativa: é um extra, não vale insistir."""
+def scrape_store_coupons(browser, url: str, settings,
+                         diag: Optional[dict] = None) -> tuple[list[str], Optional[str]]:
+    """Lê os cupons de UMA página. Retorna (cupons, erro). Uma tentativa: é um extra, não vale insistir.
+    `diag` (opcional) recebe a URL final, o título e o início do texto, para diagnosticar páginas sem cupom."""
     context = None
     try:
         context = browser.new_context(locale="pt-BR", timezone_id="America/Sao_Paulo",
@@ -61,6 +66,13 @@ def scrape_store_coupons(browser, url: str, settings) -> tuple[list[str], Option
             pass
         page.mouse.wheel(0, 900)
         page.wait_for_timeout(1200)
+        if diag is not None:
+            diag["final_url"] = page.url
+            try:
+                diag["title"] = " ".join((page.title() or "").split())[:70]
+                diag["text"] = " ".join((page.inner_text("body") or "").split())[:160]
+            except Exception:  # noqa: BLE001
+                pass
         if BLOCK_URL_RE.search(page.url):
             return [], f"pediu verificação/captcha ({urlparse(page.url).netloc})"
         return _extract_coupons(page, {}, api), None
@@ -74,14 +86,19 @@ def scrape_store_coupons(browser, url: str, settings) -> tuple[list[str], Option
                 pass
 
 
-def read_store(browser, store: dict, settings) -> tuple[list[str], Optional[str], str]:
-    """Junta os cupons de todas as páginas da loja. Retorna (cupons, erro se TODAS falharam, url do 1º sucesso)."""
+def read_store(browser, store: dict, settings, notes: Optional[list] = None) -> tuple[list[str], Optional[str], str]:
+    """Junta os cupons de todas as páginas da loja. Retorna (cupons, erro se TODAS falharam, url do 1º sucesso).
+    `notes` (opcional) recebe uma linha de diagnóstico por página."""
     coupons: list[str] = []
     errors: list[str] = []
     first_ok = store["urls"][0]
     got_page = False
     for url in store["urls"]:
-        found, err = scrape_store_coupons(browser, url, settings)
+        diag: dict = {}
+        found, err = scrape_store_coupons(browser, url, settings, diag if notes is not None else None)
+        if notes is not None:
+            notes.append(f"{url[:70]} → {str(diag.get('final_url', '?'))[:80]} | título: {diag.get('title', '')!r} | "
+                         f"{'ERRO ' + err if err else str(len(found)) + ' cupom(ns)'} | texto: {diag.get('text', '')!r}")
         if err:
             errors.append(err)
             if err.startswith("HTTP 403"):   # bloqueio de IP: as outras páginas da loja também bloqueiam
@@ -112,7 +129,10 @@ def run_store_coupons(browser, settings, notifier, send_digest) -> dict:
             continue
         log.info("[%s] cupons da loja: %d encontrado(s)", name, len(coupons))
         if coupons and settings.notify_coupons and notifier.configured:
-            stats["sent"] += send_digest([({"name": name, "url": url}, coupons)], settings, notifier)
+            product = {"name": name, "url": url}
+            if store.get("label"):
+                product["label"] = store["label"]
+            stats["sent"] += send_digest([(product, coupons)], settings, notifier)
     log.info("Cupons das lojas: %d conferida(s), %d com erro, %d mensagem(ns)",
              stats["checked"], stats["errors"], stats["sent"])
     return stats
@@ -122,12 +142,15 @@ def debug_stores(browser, settings) -> list[str]:
     """Relatório de teste: o que cada loja de stores.json devolve (não envia nada)."""
     lines = []
     for store in load_stores():
-        coupons, err, url = read_store(browser, store, settings)
+        notes: list[str] = []
+        coupons, err, url = read_store(browser, store, settings, notes)
         if err:
-            lines.append(f"  ✗ {store['name']:<24} {err}")
+            lines.append(f"  ✗ {store['name']:<28} {err}")
         elif coupons:
-            lines.append(f"  ✓ {store['name']:<24} {len(coupons)} cupom(ns):")
+            lines.append(f"  ✓ {store['name']:<28} {len(coupons)} cupom(ns):")
             lines += [f"        • {c[:110]}" for c in coupons]
         else:
-            lines.append(f"  · {store['name']:<24} página abriu, mas nenhum cupom publicado ({url[:70]})")
+            lines.append(f"  · {store['name']:<28} página abriu, mas nenhum cupom publicado")
+        if not coupons or len(store["urls"]) > 1:
+            lines += [f"        ↳ {n}" for n in notes]
     return lines

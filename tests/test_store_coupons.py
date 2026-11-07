@@ -61,3 +61,27 @@ def test_second_page_of_a_store_is_merged_and_first_failure_tolerated(browser, b
     store = {"name": "X", "urls": [f"{base_url}/nao-existe.html", f"{base_url}/jsonld_sizes.html"]}
     coupons, err, url = store_coupons.read_store(browser, store, make_settings())
     assert err is None and any("BLACK10" in c for c in coupons) and url.endswith("jsonld_sizes.html")
+
+
+def test_aggregator_entry_uses_its_own_label_and_does_not_mix_with_the_store(browser, base_url, tmp_path, monkeypatch):  # noqa: F811
+    entries = [{"name": "Loja (via agregadores)", "label": "Loja — via agregador", "urls": [f"{base_url}/jsonld_sizes.html"]}]
+    monkeypatch.setattr(store_coupons, "load_stores", lambda path=None: entries)
+    settings = make_settings(tmp_path, store_coupons_enabled=True)
+    db.init_db(settings.db_path)
+    n = Notifier()
+    store_coupons.run_store_coupons(browser, settings, n, main.send_coupon_digest)
+    assert "Cupons — Loja — via agregador" in n.sent[0]
+
+
+def test_loader_keeps_label(tmp_path):
+    f = tmp_path / "s.json"
+    f.write_text('[{"name":"A","label":"A — via x","urls":["https://a.com/"]},{"name":"B","url":"https://b.com/"}]')
+    got = store_coupons.load_stores(str(f))
+    assert got[0]["label"] == "A — via x" and "label" not in got[1]
+
+
+def test_debug_report_explains_empty_pages(browser, base_url, monkeypatch):  # noqa: F811
+    monkeypatch.setattr(store_coupons, "load_stores",
+                        lambda path=None: [{"name": "Sem cupom", "urls": [f"{base_url}/no_price.html"]}])
+    text = "\n".join(store_coupons.debug_stores(browser, make_settings()))
+    assert "nenhum cupom publicado" in text and "↳" in text and "título:" in text and "texto:" in text

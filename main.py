@@ -200,7 +200,7 @@ def send_coupon_digest(batch: list[tuple[dict, list[str]]], settings: Settings, 
     """Manda uma mensagem por loja com os cupons NOVOS do lote. Retorna quantas mensagens foram enviadas."""
     by_host: dict[str, dict] = {}
     for product, texts in batch:
-        entry = by_host.setdefault(store_host(product["url"]),
+        entry = by_host.setdefault(product.get("label") or store_host(product["url"]),
                                    {"url": product["url"], "name": product["name"], "texts": []})
         for text in texts:
             if text not in entry["texts"]:

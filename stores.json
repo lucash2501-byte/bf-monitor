@@ -22,5 +22,8 @@
   {"name": "Guess Brasil", "urls": ["https://www.guessbrasil.com.br/"]},
   {"name": "Morena Rosa", "urls": ["https://www.morenarosa.com.br/"]},
   {"name": "Hugo Boss", "urls": ["https://www.hugoboss.com.br/"]},
-  {"name": "Zara", "urls": ["https://www.zara.com/br/"]}
+  {"name": "Zara", "urls": ["https://www.zara.com/br/"]},
+  {"name": "Mercado Livre (via agregadores)", "label": "Mercado Livre — via agregador", "urls": ["https://www.promobit.com.br/cupons/mercado-livre/", "https://www.cuponomia.com.br/desconto/mercado-livre", "https://www.pelando.com.br/cupons/mercado-livre", "https://www.meliuz.com.br/desconto/mercado-livre"]},
+  {"name": "Centauro (via agregadores)", "label": "Centauro — via agregador", "urls": ["https://www.promobit.com.br/cupons/centauro/", "https://www.cuponomia.com.br/desconto/centauro", "https://www.pelando.com.br/cupons/centauro", "https://www.meliuz.com.br/desconto/centauro"]},
+  {"name": "Netshoes (via agregadores)", "label": "Netshoes — via agregador", "urls": ["https://www.promobit.com.br/cupons/netshoes/", "https://www.cuponomia.com.br/desconto/netshoes", "https://www.pelando.com.br/cupons/netshoes", "https://www.meliuz.com.br/desconto/netshoes"]}
 ]

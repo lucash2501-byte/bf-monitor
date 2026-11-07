@@ -144,6 +144,8 @@ loja publica). Para incluir uma loja: `{"name": "Loja", "urls": ["https://www.lo
 (pode listar páginas de cupom/promoção). Para ver o que cada loja devolve: **Actions → Testar cupons das lojas →
 Run workflow** (ou `python main.py --stores-test`). Lojas que bloqueiam IP de datacenter ficam com ✗, como no resto do monitor.
 
+**Agregadores:** para lojas que bloqueiam o GitHub (Mercado Livre, Centauro, Netshoes) há entradas "(via agregadores)" que leem páginas de cupom do Promobit, Cuponomia, Pelando e Méliuz. Esses sites misturam cupom vencido ou que não funciona; o aviso vem marcado "via agregador" e vale conferir no carrinho. O teste de cupons mostra, por página, a URL final, o título e o início do texto (ajuda a ver se caiu em login/verificação).
+
 ## Comparar com outras lojas
 
 O monitor procura o **mesmo modelo** (marca + modelo + número + cor, tirados do `name` do produto) na busca das
