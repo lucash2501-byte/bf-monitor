@@ -92,6 +92,7 @@ def test_aggregator_keeps_only_lines_with_a_real_code():
     drop = ["Cupom Mercado Livre oferece 10% OFF", "Use cupom Mercado Livre e tenha desconto de 10%",
             "Código promocional Netshoes concede 10% OFF", "Cupom de desconto Centauro concede 5% OFF"]
     assert all(store_coupons.has_real_code(c) for c in keep)
+    assert not store_coupons.has_real_code("PROMOBIT") and not store_coupons.has_real_code("CUPONOMIA")
     assert not any(store_coupons.has_real_code(c) for c in drop)
 
 

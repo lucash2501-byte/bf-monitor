@@ -26,7 +26,8 @@ STORES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stores.j
 # e nomes de loja em maiúsculas não contam. Agregadores trazem muita frase de marketing sem código.
 _CODE_TOKEN = re.compile(r"\b(?=[A-Z0-9]*[A-Z])[A-Z0-9]{5,16}\b")   # precisa ter ao menos uma letra (11DO11 vale, 10000 não)
 _NOT_CODES = {"CUPOM", "CUPONS", "DESCONTO", "FRETE", "GRATIS", "GRÁTIS", "BLACK", "FRIDAY", "NETSHOES", "CENTAURO",
-              "MERCADO", "LIVRE", "COMPRA", "COMPRAS", "OFERTA", "OFERTAS", "NOVEMBRO", "EXTRA"}
+              "MERCADO", "LIVRE", "COMPRA", "COMPRAS", "OFERTA", "OFERTAS", "NOVEMBRO", "EXTRA",
+              "PROMOBIT", "CUPONOMIA", "PELANDO", "MELIUZ", "MÉLIUZ"}   # nomes dos próprios agregadores
 
 
 def has_real_code(line: str) -> bool:
