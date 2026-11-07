@@ -102,6 +102,8 @@ def build_alert_message(product: dict, snap, decision) -> str:
         lines.append(f"📉 <b>{decision.discount_vs_ref_pct:.1f}% abaixo da referência</b> (desconto real)")
     for w in decision.warnings:
         lines.append(f"⚠️ {e(w)}")
+    for note in product.get("notes") or []:
+        lines.append(f"🔎 {e(note)}")
     if snap.coupons:
         lines.append("")
         lines.append("🎟️ <b>Cupons/banners na página:</b>")

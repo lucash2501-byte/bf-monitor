@@ -221,6 +221,11 @@ def send_coupon_digest(batch: list[tuple[dict, list[str]]], settings: Settings, 
     return sent
 
 
+def only_compare_skip(only: Optional[str]) -> bool:
+    """Com --only (ajuste de um produto) não gastamos tempo comparando lojas."""
+    return bool(only)
+
+
 def run_cycle(settings: Settings, notifier: TelegramNotifier, only: Optional[str] = None) -> None:
     from playwright.sync_api import sync_playwright  # import tardio: facilita testes
 
@@ -260,6 +265,12 @@ def run_cycle(settings: Settings, notifier: TelegramNotifier, only: Optional[str
                 counts[status] += 1
                 if i < len(products) - 1:
                     time.sleep(random.uniform(3, 8))  # pausa "humana" entre produtos
+            if settings.compare_enabled and not only_compare_skip(only):
+                try:
+                    import compare
+                    compare.run_comparisons(browser, products, settings, notifier, process_product)
+                except Exception:  # noqa: BLE001 — a comparação é um extra
+                    log.exception("Erro na comparação entre lojas")
         finally:
             try:
                 browser.close()
@@ -333,6 +344,8 @@ def main() -> int:
     parser.add_argument("--only", metavar="TEXTO", help="processa só produtos cujo id/nome contém TEXTO")
     parser.add_argument("--test-telegram", action="store_true", help="envia mensagem de teste")
     parser.add_argument("--stats", action="store_true", help="mostra resumo do histórico")
+    parser.add_argument("--search-test", metavar="NOME",
+                        help="testa a busca do modelo em todas as lojas e mostra o resultado (não envia nada)")
     args = parser.parse_args()
 
     settings = load_settings()
@@ -347,6 +360,18 @@ def main() -> int:
 
     if args.stats:
         show_stats(settings)
+        return 0
+
+    if args.search_test:
+        from playwright.sync_api import sync_playwright
+        import compare
+        with sync_playwright() as pw:
+            browser = _launch_browser(pw, settings)
+            try:
+                for line in compare.debug_search(browser, args.search_test, settings):
+                    print(line, flush=True)
+            finally:
+                browser.close()
         return 0
 
     if not notifier.configured:

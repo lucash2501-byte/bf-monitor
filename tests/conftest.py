@@ -16,7 +16,7 @@ def make_settings(tmp_path=None, **overrides) -> Settings:
         alert_on_unknown_stock=True, confirm_alerts=True, fail_notice_after=3,
         headless=True, page_timeout_ms=15000, max_retries=1,
         db_path=str(tmp_path / "t.db") if tmp_path else ":memory:",
-        products_path="products.json", log_file="", debug_dir="",
+        products_path="products.json", log_file="", debug_dir="", compare_enabled=False,
     )
     values.update(overrides)
     return Settings(**values)

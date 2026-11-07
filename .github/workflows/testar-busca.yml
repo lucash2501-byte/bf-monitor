@@ -1,0 +1,31 @@
+name: Testar busca entre lojas
+
+# Mostra, no log, em quais lojas a busca por um modelo funciona. Não envia nada no Telegram.
+on:
+  workflow_dispatch:
+    inputs:
+      nome:
+        description: "Marca, modelo, número e cor (ex.: Nike Pegasus 41 preto)"
+        required: true
+        default: "Nike Pegasus 41 preto"
+
+jobs:
+  busca:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NOME: ${{ inputs.nome }}
+      DB_PATH: teste.db
+      LOG_FILE: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar dependências
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+      - name: Buscar em todas as lojas
+        run: python main.py --search-test "$NOME"

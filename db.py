@@ -32,6 +32,20 @@ CREATE TABLE IF NOT EXISTS coupons_seen (
     last_notified TEXT,
     PRIMARY KEY (host, text)
 );
+
+CREATE TABLE IF NOT EXISTS compare_candidates (
+    product_id TEXT NOT NULL,
+    host TEXT NOT NULL,
+    url TEXT NOT NULL,
+    title TEXT,
+    color_ok INTEGER,           -- 1 = cor confere, NULL = a listagem não diz
+    found_ts TEXT NOT NULL,
+    PRIMARY KEY (product_id, url)
+);
+CREATE TABLE IF NOT EXISTS compare_searches (
+    product_id TEXT PRIMARY KEY,
+    ts TEXT NOT NULL
+);
 """
 
 TS_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -99,6 +113,15 @@ def get_last_reading(db_path: str, product_id: str) -> Optional[sqlite3.Row]:
             "SELECT ts, price_cash, in_stock, error FROM prices WHERE product_id = ? ORDER BY id DESC LIMIT 1",
             (product_id,),
         ).fetchone()
+
+
+def get_last_price(db_path: str, product_id: str) -> Optional[float]:
+    """Última leitura de preço válida (ignora leituras com erro)."""
+    with connect(db_path) as conn:
+        row = conn.execute(
+            "SELECT price_cash FROM prices WHERE product_id = ? AND price_cash IS NOT NULL AND price_cash > 0 "
+            "ORDER BY id DESC LIMIT 1", (product_id,)).fetchone()
+    return float(row["price_cash"]) if row else None
 
 
 def count_errors(db_path: str, product_id: str, hours: float) -> int:
@@ -177,3 +200,31 @@ def mark_coupons_notified(db_path: str, host: str, texts: list[str]) -> None:
                 "ON CONFLICT(host, text) DO UPDATE SET last_notified = excluded.last_notified",
                 (host, _coupon_key(text), now, now),
             )
+
+
+# ------------------------------------------------------------------ comparação entre lojas
+def hours_since_candidates(db_path: str, product_id: str) -> Optional[float]:
+    """Horas desde a última busca de candidatos deste produto (None = nunca buscou)."""
+    with connect(db_path) as conn:
+        row = conn.execute("SELECT ts FROM compare_searches WHERE product_id = ?", (product_id,)).fetchone()
+    return hours_since(row["ts"]) if row else None
+
+
+def save_candidates(db_path: str, product_id: str, items: list[tuple]) -> None:
+    """Substitui os candidatos do produto por (host, url, title, color_ok) e marca a busca como feita agora."""
+    now = _now()
+    with connect(db_path) as conn:
+        conn.execute("DELETE FROM compare_candidates WHERE product_id = ?", (product_id,))
+        conn.executemany(
+            "INSERT OR REPLACE INTO compare_candidates (product_id, host, url, title, color_ok, found_ts) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            [(product_id, h, u, t, None if c is None else int(c), now) for h, u, t, c in items],
+        )
+        conn.execute("INSERT OR REPLACE INTO compare_searches (product_id, ts) VALUES (?, ?)", (product_id, now))
+
+
+def get_candidates(db_path: str, product_id: str) -> list[tuple]:
+    with connect(db_path) as conn:
+        rows = conn.execute("SELECT host, url, title, color_ok FROM compare_candidates WHERE product_id = ?",
+                            (product_id,)).fetchall()
+    return [(r["host"], r["url"], r["title"], None if r["color_ok"] is None else bool(r["color_ok"])) for r in rows]

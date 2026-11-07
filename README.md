@@ -10,6 +10,8 @@ confere o estoque da sua variação/tamanho e avisa no Telegram com os cupons en
 ├── main.py          # loop principal / CLI
 ├── scraper.py       # Playwright: preço, parcelado, estoque da variação, cupons
 ├── coupons.py       # lê cupons publicados pela loja (API interna / estado da página)
+├── compare.py       # procura o mesmo modelo em outras lojas e compara preços
+├── search_stores.json  # lojas onde a busca é feita (edite para incluir/remover)
 ├── analyzer.py      # regras de alerta (alvo + estoque + desconto real)
 ├── notifier.py      # Telegram
 ├── db.py            # SQLite (histórico de preços e alertas)
@@ -131,6 +133,24 @@ Para mandar para um **canal** em vez da conversa privada: adicione o bot como ad
 O monitor só lê o que a loja **publica**. Ele não adivinha códigos nem testa cupons no carrinho. Cupons de
 e-mail, de primeira compra ou ligados à sua conta só aparecem se a loja os mostrar na página. Trate a lista como
 sugestão: confirme no carrinho antes de contar com o desconto.
+
+## Comparar com outras lojas
+
+O monitor procura o **mesmo modelo** (marca + modelo + número + cor, tirados do `name` do produto) na busca das
+lojas listadas em `search_stores.json` e avisa no Telegram quando uma outra loja está **pelo menos
+`COMPARE_MIN_DIFF_PCT`% (padrão 5%) mais barata** que a loja principal, ou abaixo do seu preço-alvo.
+
+- É **busca automática**: o aviso diz "confira modelo, cor e tamanho antes de comprar". Ele descarta resultados com outro
+  número de modelo (41 ≠ 40), outra cor, outro gênero ou infantil, mas a loja pode ter variações que o texto não revela.
+- O nome do produto precisa ter pelo menos **marca + linha** (ex.: "Tênis Nike Pegasus 41 Preto"). Nomes genéricos
+  ("Camiseta Preta") são ignorados. Para mudar o texto buscado: `"search": "pegasus 41 black"`. Para não comparar um
+  produto: `"compare": false`. A cor pode vir de `"color": "azul"`; o tamanho vem de `variations`.
+- A cada `COMPARE_SEARCH_EVERY_HOURS` (6h) ele refaz a busca; entre as buscas, só relê os preços dos candidatos.
+- Lojas que bloqueiam IP de datacenter (Mercado Livre, Netshoes, Centauro...) ficam sem resultado, igual ao monitor principal.
+- Para ver **em quais lojas a busca funciona** para um modelo: **Actions → Testar busca entre lojas → Run workflow**,
+  digite o modelo e abra o log (✓ achou, · sem resultado, ✗ erro/bloqueio). Local: `python main.py --search-test "Nike Pegasus 41 preto"`.
+- As lojas ficam em `search_stores.json` (`{q}` = busca com +, `{q_path}` = com %20, `{q_dash}` = com hífen).
+  Se uma loja nunca acha nada, o formato do link de busca dela pode estar diferente: ajuste a `url` lá.
 
 ## Rodar online (GitHub Actions) — sem instalar nada no seu computador
 
