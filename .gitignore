@@ -1,5 +1,10 @@
 .env
 *.db
+*.db-journal
 *.log
+*.log.*
 .venv/
 __pycache__/
+.pytest_cache/
+debug/
+.DS_Store
