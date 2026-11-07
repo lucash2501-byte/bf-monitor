@@ -4,8 +4,7 @@ import os
 import sys
 import time
 import logging
-from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 
 from config import load_settings, load_products
 from db import Database
@@ -25,7 +24,6 @@ def run_monitoring_cycle(settings, products: List[dict], db: Database):
     log.info("Iniciando rodada de monitoramento para %d produto(s)...", len(products))
     
     with init_browser(headless=settings.headless) as page:
-        # Agrupar ofertas por group_id para selecionar o menor preço por produto
         grouped_snapshots = {}
 
         for product in products:
@@ -34,7 +32,6 @@ def run_monitoring_cycle(settings, products: List[dict], db: Database):
                 snapshot = scrape_product(page, product, settings)
                 
                 if snapshot and snapshot.price_cash:
-                    # Grava o preço atual no banco de dados SQLite
                     db.save_price(product["id"], snapshot.price_cash, snapshot.price_installment)
                     
                     group_id = product.get("group_id", product["id"])
@@ -50,11 +47,9 @@ def run_monitoring_cycle(settings, products: List[dict], db: Database):
             except Exception as exc:
                 log.error("Erro ao verificar %s: %s", product.get("name"), exc)
 
-        # Avaliar e enviar alertas para a melhor oferta de cada grupo
         for group_id, items in grouped_snapshots.items():
-            # Ordena pelo menor preço à vista
             items.sort(key=lambda x: x["snapshot"].price_cash)
-            best_item = items[0]  # Loja campeã (menor preço)
+            best_item = items[0]
             
             product = best_item["product"]
             snapshot = best_item["snapshot"]
@@ -63,19 +58,16 @@ def run_monitoring_cycle(settings, products: List[dict], db: Database):
             should_alert = False
             discount_pct = 0.0
 
-            # Regra 1: Desconto de 10% ou mais em relação ao histórico
             if min_price_history and min_price_history > 0:
                 if snapshot.price_cash < min_price_history:
                     discount_pct = ((min_price_history - snapshot.price_cash) / min_price_history) * 100
                     if discount_pct >= 10.0:
                         should_alert = True
 
-            # Regra 2: Preço igual ou abaixo do target_price cadastrado
             target_price = product.get("target_price", 0.0)
             if target_price > 0 and snapshot.price_cash <= target_price:
                 should_alert = True
 
-            # Regra 3: Alerta inicial sem histórico (se configurado no .env)
             if settings.allow_alert_without_history and not should_alert:
                 should_alert = True
 
@@ -107,4 +99,9 @@ def main():
         except Exception as exc:
             log.error("Erro na rodada de monitoramento: %s", exc)
 
-        log.info("Pr
+        log.info("Próxima rodada em %d minutos...", settings.check_interval_minutes)
+        time.sleep(settings.check_interval_minutes * 60)
+
+
+if __name__ == "__main__":
+    main()
