@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import random
 import re
 import statistics
@@ -120,6 +121,33 @@ def show_stats(settings: Settings) -> None:
             print(f"{p['name']}: sem histórico ainda")
 
 
+def start_health_server() -> None:
+    """Abre uma porta HTTP mínima se a variável PORT existir (necessário para Web Service do Render)."""
+    port = os.getenv("PORT")
+    if not port:
+        return
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):  # noqa: N802
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(b"bf-monitor ok")
+
+        def do_HEAD(self):  # noqa: N802
+            self.send_response(200)
+            self.end_headers()
+
+        def log_message(self, *args):  # silencia o log de cada requisição
+            pass
+
+    server = HTTPServer(("0.0.0.0", int(port)), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    log.info("Servidor de saúde na porta %s", port)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Monitor de preços Black Friday")
     parser.add_argument("--once", action="store_true", help="roda uma vez e sai")
@@ -152,6 +180,7 @@ def main() -> int:
         run_cycle(settings, notifier)
         return 0
 
+    start_health_server()
     log.info("Loop iniciado (a cada ~%.0f min). Ctrl+C para parar.", settings.interval_minutes)
     if notifier.configured:
         try:
