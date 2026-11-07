@@ -12,6 +12,8 @@ confere o estoque da sua variação/tamanho e avisa no Telegram com os cupons en
 ├── coupons.py       # lê cupons publicados pela loja (API interna / estado da página)
 ├── compare.py       # procura o mesmo modelo em outras lojas e compara preços
 ├── search_stores.json  # lojas onde a busca é feita (edite para incluir/remover)
+├── store_coupons.py # vigia cupons na página inicial das lojas de stores.json
+├── stores.json      # lojas para vigiar cupons (sem precisar de produto)
 ├── analyzer.py      # regras de alerta (alvo + estoque + desconto real)
 ├── notifier.py      # Telegram
 ├── db.py            # SQLite (histórico de preços e alertas)
@@ -133,6 +135,14 @@ Para mandar para um **canal** em vez da conversa privada: adicione o bot como ad
 O monitor só lê o que a loja **publica**. Ele não adivinha códigos nem testa cupons no carrinho. Cupons de
 e-mail, de primeira compra ou ligados à sua conta só aparecem se a loja os mostrar na página. Trate a lista como
 sugestão: confirme no carrinho antes de contar com o desconto.
+
+## Cupons por loja (sem produto)
+
+Além dos cupons das páginas dos produtos, o monitor abre a **página inicial** de cada loja de `stores.json` a cada
+`STORE_COUPONS_EVERY_HOURS` (2h) e manda para o Telegram os cupons **novos** (mesmas regras: nada repetido, só o que a
+loja publica). Para incluir uma loja: `{"name": "Loja", "urls": ["https://www.loja.com.br/", "https://www.loja.com.br/cupons"]}`
+(pode listar páginas de cupom/promoção). Para ver o que cada loja devolve: **Actions → Testar cupons das lojas →
+Run workflow** (ou `python main.py --stores-test`). Lojas que bloqueiam IP de datacenter ficam com ✗, como no resto do monitor.
 
 ## Comparar com outras lojas
 

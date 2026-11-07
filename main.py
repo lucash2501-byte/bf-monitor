@@ -267,6 +267,12 @@ def run_cycle(settings: Settings, notifier: TelegramNotifier, only: Optional[str
                 counts[status] += 1
                 if i < len(products) - 1:
                     time.sleep(random.uniform(3, 8))  # pausa "humana" entre produtos
+            if settings.store_coupons_enabled and not only_compare_skip(only):
+                try:
+                    import store_coupons
+                    store_coupons.run_store_coupons(browser, settings, notifier, send_coupon_digest)
+                except Exception:  # noqa: BLE001 — cupons de loja são um extra
+                    log.exception("Erro nos cupons das lojas")
             if settings.compare_enabled and not only_compare_skip(only):
                 try:
                     import compare
@@ -341,6 +347,8 @@ def main() -> int:
     parser.add_argument("--only", metavar="TEXTO", help="processa só produtos cujo id/nome contém TEXTO")
     parser.add_argument("--test-telegram", action="store_true", help="envia mensagem de teste")
     parser.add_argument("--stats", action="store_true", help="mostra resumo do histórico")
+    parser.add_argument("--stores-test", action="store_true",
+                        help="mostra os cupons que cada loja de stores.json publica (não envia nada)")
     parser.add_argument("--search-test", metavar="NOME",
                         help="testa a busca do modelo em todas as lojas e mostra o resultado (não envia nada)")
     args = parser.parse_args()
@@ -357,6 +365,18 @@ def main() -> int:
 
     if args.stats:
         show_stats(settings)
+        return 0
+
+    if args.stores_test:
+        from playwright.sync_api import sync_playwright
+        import store_coupons
+        with sync_playwright() as pw:
+            browser = _launch_browser(pw, settings)
+            try:
+                for line in store_coupons.debug_stores(browser, settings):
+                    print(line, flush=True)
+            finally:
+                browser.close()
         return 0
 
     if args.search_test:

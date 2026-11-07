@@ -51,6 +51,8 @@ class Settings:
     compare_search_every_hours: float = 6.0
     compare_max_searches: int = 3
     compare_max_candidates: int = 4
+    store_coupons_enabled: bool = True
+    store_coupons_every_hours: float = 2.0
 
 
 def load_settings() -> Settings:
@@ -81,4 +83,6 @@ def load_settings() -> Settings:
         compare_search_every_hours=_num("COMPARE_SEARCH_EVERY_HOURS", "6", float, 0),
         compare_max_searches=_num("COMPARE_MAX_SEARCHES", "3", int, 0),
         compare_max_candidates=_num("COMPARE_MAX_CANDIDATES", "4", int, 1),
+        store_coupons_enabled=_bool("STORE_COUPONS_ENABLED", "true"),
+        store_coupons_every_hours=_num("STORE_COUPONS_EVERY_HOURS", "2", float, 0),
     )

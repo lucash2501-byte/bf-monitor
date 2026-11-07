@@ -42,6 +42,10 @@ CREATE TABLE IF NOT EXISTS compare_candidates (
     found_ts TEXT NOT NULL,
     PRIMARY KEY (product_id, url)
 );
+CREATE TABLE IF NOT EXISTS store_checks (
+    name TEXT PRIMARY KEY,
+    ts TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS compare_searches (
     product_id TEXT PRIMARY KEY,
     ts TEXT NOT NULL
@@ -228,3 +232,15 @@ def get_candidates(db_path: str, product_id: str) -> list[tuple]:
         rows = conn.execute("SELECT host, url, title, color_ok FROM compare_candidates WHERE product_id = ?",
                             (product_id,)).fetchall()
     return [(r["host"], r["url"], r["title"], None if r["color_ok"] is None else bool(r["color_ok"])) for r in rows]
+
+
+# ------------------------------------------------------------------ cupons por loja (sem produto)
+def hours_since_store_check(db_path: str, name: str) -> Optional[float]:
+    with connect(db_path) as conn:
+        row = conn.execute("SELECT ts FROM store_checks WHERE name = ?", (name,)).fetchone()
+    return hours_since(row["ts"]) if row else None
+
+
+def mark_store_checked(db_path: str, name: str) -> None:
+    with connect(db_path) as conn:
+        conn.execute("INSERT OR REPLACE INTO store_checks (name, ts) VALUES (?, ?)", (name, _now()))

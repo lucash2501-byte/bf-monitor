@@ -11,5 +11,8 @@
   {"name": "netshoes.com.br", "url": "https://www.netshoes.com.br/busca?q={q}"},
   {"name": "zattini.com.br", "url": "https://www.zattini.com.br/busca?q={q}"},
   {"name": "magazineluiza.com.br", "url": "https://www.magazineluiza.com.br/busca/{q_path}/"},
-  {"name": "mercadolivre.com.br", "url": "https://lista.mercadolivre.com.br/{q_dash}"}
+  {"name": "mercadolivre.com.br", "url": "https://lista.mercadolivre.com.br/{q_dash}"},
+  {"name": "decathlon.com.br", "urls": ["https://www.decathlon.com.br/search?q={q}", "https://www.decathlon.com.br/{q_path}?_q={q_path}&map=ft", "https://www.decathlon.com.br/busca?q={q}"]},
+  {"name": "velocita.com.br", "urls": ["https://www.velocita.com.br/{q_path}?_q={q_path}&map=ft", "https://www.velocita.com.br/busca?q={q}", "https://www.velocita.com.br/search?q={q}"]},
+  {"name": "authenticfeet.com.br", "urls": ["https://www.authenticfeet.com.br/{q_path}?_q={q_path}&map=ft", "https://www.authenticfeet.com.br/busca?q={q}", "https://www.authenticfeet.com.br/search?q={q}"]}
 ]
