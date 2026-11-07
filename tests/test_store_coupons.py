@@ -85,3 +85,20 @@ def test_debug_report_explains_empty_pages(browser, base_url, monkeypatch):  # n
                         lambda path=None: [{"name": "Sem cupom", "urls": [f"{base_url}/no_price.html"]}])
     text = "\n".join(store_coupons.debug_stores(browser, make_settings()))
     assert "nenhum cupom publicado" in text and "↳" in text and "título:" in text and "texto:" in text
+
+
+def test_aggregator_keeps_only_lines_with_a_real_code():
+    keep = ["Use o cupom PRIMEIRA10 e ganhe 10% OFF", "cupom: VOUDEAPP", "35% OFF - Cupom 11DOZE5"]
+    drop = ["Cupom Mercado Livre oferece 10% OFF", "Use cupom Mercado Livre e tenha desconto de 10%",
+            "Código promocional Netshoes concede 10% OFF", "Cupom de desconto Centauro concede 5% OFF"]
+    assert all(store_coupons.has_real_code(c) for c in keep)
+    assert not any(store_coupons.has_real_code(c) for c in drop)
+
+
+def test_aggregator_403_does_not_stop_the_next_site(browser, base_url, monkeypatch):  # noqa: F811
+    store = {"name": "X (via agregadores)", "label": "X — via agregador",
+             "urls": [f"{base_url}/nao-existe.html", f"{base_url}/jsonld_sizes.html"]}
+    monkeypatch.setattr(store_coupons, "scrape_store_coupons",
+                        lambda b, u, s, d=None: ([], "HTTP 403") if "nao-existe" in u else (["use o cupom BLACK10 e ganhe 10%"], None))
+    coupons, err, _ = store_coupons.read_store(browser, store, make_settings())
+    assert err is None and coupons == ["use o cupom BLACK10 e ganhe 10%"]

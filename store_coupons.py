@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -19,6 +20,17 @@ from scraper import (BLOCK_URL_RE, STEALTH_JS, _collect_api_coupons, _extract_co
 log = logging.getLogger("store_coupons")
 
 STORES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stores.json")
+
+
+# código de cupom de verdade: token em MAIÚSCULAS com 5-16 caracteres (ex.: PRIMEIRA10, 11DO11); "OFF", "PIX"
+# e nomes de loja em maiúsculas não contam. Agregadores trazem muita frase de marketing sem código.
+_CODE_TOKEN = re.compile(r"\b(?=[A-Z0-9]*[A-Z])[A-Z0-9]{5,16}\b")   # precisa ter ao menos uma letra (11DO11 vale, 10000 não)
+_NOT_CODES = {"CUPOM", "CUPONS", "DESCONTO", "FRETE", "GRATIS", "GRÁTIS", "BLACK", "FRIDAY", "NETSHOES", "CENTAURO",
+              "MERCADO", "LIVRE", "COMPRA", "COMPRAS", "OFERTA", "OFERTAS", "NOVEMBRO", "EXTRA"}
+
+
+def has_real_code(line: str) -> bool:
+    return any(t not in _NOT_CODES for t in _CODE_TOKEN.findall(line))
 
 
 def load_stores(path: str = STORES_PATH) -> list[dict]:
@@ -101,11 +113,13 @@ def read_store(browser, store: dict, settings, notes: Optional[list] = None) -> 
                          f"{'ERRO ' + err if err else str(len(found)) + ' cupom(ns)'} | texto: {diag.get('text', '')!r}")
         if err:
             errors.append(err)
-            if err.startswith("HTTP 403"):   # bloqueio de IP: as outras páginas da loja também bloqueiam
-                break
+            if err.startswith("HTTP 403") and not store.get("label"):
+                break        # bloqueio de IP da loja: as outras páginas dela também bloqueiam (agregadores: tenta o próximo site)
             continue
         if not got_page:
             first_ok, got_page = url, True
+        if store.get("label"):      # agregador: só linhas com código de verdade
+            found = [c for c in found if has_real_code(c)]
         coupons += [c for c in found if c not in coupons]
     return coupons, (None if got_page else (errors[0] if errors else "sem página")), first_ok
 
