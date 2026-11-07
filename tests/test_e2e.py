@@ -66,6 +66,8 @@ def test_full_cycle_alert_failure_notice_and_crash_isolation(tmp_path, base_url)
 
     notices = [m for m in notifier.sent if "Não consigo ler" in m]
     assert len(notices) == 1 and "Loja bloqueada" in notices[0]      # aviso agrupado de leitura falhando
-    assert "Preço normal" not in "".join(notifier.sent)              # sem desconto real: sem alerta
+    assert not [m for m in notifier.sent if "Preço normal" in m and "À vista" in m]   # sem desconto real: sem alerta
+    coupons = [m for m in notifier.sent if m.startswith("🎟️")]
+    assert len(coupons) == 1 and "BLACK10" in coupons[0]            # cupom da página enviado, 1 mensagem por loja
     assert db.get_last_reading(settings.db_path, "bloqueado")["error"]
     assert db.get_last_reading(settings.db_path, "caro")["price_cash"] == 399.90   # seguiu após o crash

@@ -24,6 +24,14 @@ CREATE TABLE IF NOT EXISTS alerts (
     price REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_alerts_product_ts ON alerts(product_id, ts);
+
+CREATE TABLE IF NOT EXISTS coupons_seen (
+    host TEXT NOT NULL,
+    text TEXT NOT NULL,
+    first_seen TEXT NOT NULL,
+    last_notified TEXT,
+    PRIMARY KEY (host, text)
+);
 """
 
 TS_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -140,3 +148,32 @@ def parse_ts(ts: str) -> datetime:
 
 def hours_since(ts: str) -> float:
     return (datetime.now(timezone.utc) - parse_ts(ts)).total_seconds() / 3600
+
+
+def _coupon_key(text: str) -> str:
+    return " ".join(text.split()).lower()
+
+
+def new_coupons(db_path: str, host: str, texts: list[str], renotify_hours: float) -> list[str]:
+    """Cupons que ainda não foram avisados (ou que já passaram de `renotify_hours`; 0 = nunca repetir)."""
+    fresh = []
+    with connect(db_path) as conn:
+        for text in texts:
+            row = conn.execute("SELECT last_notified FROM coupons_seen WHERE host = ? AND text = ?",
+                               (host, _coupon_key(text))).fetchone()
+            if row is None or row["last_notified"] is None:
+                fresh.append(text)
+            elif renotify_hours > 0 and hours_since(row["last_notified"]) >= renotify_hours:
+                fresh.append(text)
+    return fresh
+
+
+def mark_coupons_notified(db_path: str, host: str, texts: list[str]) -> None:
+    now = _now()
+    with connect(db_path) as conn:
+        for text in texts:
+            conn.execute(
+                "INSERT INTO coupons_seen (host, text, first_seen, last_notified) VALUES (?, ?, ?, ?) "
+                "ON CONFLICT(host, text) DO UPDATE SET last_notified = excluded.last_notified",
+                (host, _coupon_key(text), now, now),
+            )

@@ -110,3 +110,14 @@ def build_alert_message(product: dict, snap, decision) -> str:
     lines.append("")
     lines.append(f'🔗 <a href="{e(product["url"], quote=True)}">Abrir produto</a>')
     return "\n".join(lines)
+
+
+def build_coupon_message(host: str, coupons: list[str], url: str, product_name: str) -> str:
+    e = html.escape
+    lines = [f"🎟️ <b>Cupons — {e(host)}</b>", ""]
+    for c in coupons:
+        lines.append(f"• {e(c)}")
+    lines.append("")
+    lines.append(f'🔗 Visto em: <a href="{e(url, quote=True)}">{e(product_name)}</a>')
+    lines.append("ℹ️ Cupons publicados pela loja: confira no carrinho se estão valendo.")
+    return "\n".join(lines)

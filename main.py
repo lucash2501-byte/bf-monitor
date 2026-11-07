@@ -23,11 +23,12 @@ import sys
 import time
 import unicodedata
 from typing import Callable, Optional
+from urllib.parse import urlparse
 
 import analyzer
 import db
 from config import Settings, load_settings
-from notifier import TelegramNotifier, build_alert_message
+from notifier import TelegramNotifier, build_alert_message, build_coupon_message
 from scraper import Snapshot, parse_price, scrape_product
 
 log = logging.getLogger("main")
@@ -171,6 +172,38 @@ def _raise_keyboard_interrupt(signum, frame) -> None:
     raise KeyboardInterrupt  # trata SIGTERM (docker stop) como Ctrl+C: fecha o navegador e sai limpo
 
 
+def store_host(url: str) -> str:
+    return urlparse(url).netloc.lower().removeprefix("www.")
+
+
+MAX_COUPONS_PER_MESSAGE = 8
+
+
+def send_coupon_digest(batch: list[tuple[dict, list[str]]], settings: Settings, notifier: TelegramNotifier) -> int:
+    """Manda uma mensagem por loja com os cupons NOVOS desta rodada. Retorna quantas mensagens foram enviadas."""
+    by_host: dict[str, dict] = {}
+    for product, texts in batch:
+        entry = by_host.setdefault(store_host(product["url"]),
+                                   {"url": product["url"], "name": product["name"], "texts": []})
+        for text in texts:
+            if text not in entry["texts"]:
+                entry["texts"].append(text)
+    sent = 0
+    for host, entry in by_host.items():
+        fresh = db.new_coupons(settings.db_path, host, entry["texts"], settings.coupon_renotify_hours)
+        fresh = fresh[:MAX_COUPONS_PER_MESSAGE]  # o excedente vai na próxima rodada (não é marcado como enviado)
+        if not fresh:
+            continue
+        if notifier.send(build_coupon_message(host, fresh, entry["url"], entry["name"])):
+            db.mark_coupons_notified(settings.db_path, host, fresh)
+            sent += 1
+            log.info("[%s] %d cupom(ns) novo(s) enviado(s)", host, len(fresh))
+        else:
+            log.error("[%s] cupons NÃO enviados (falha no Telegram); tentará de novo na próxima rodada", host)
+        time.sleep(1)
+    return sent
+
+
 def run_cycle(settings: Settings, notifier: TelegramNotifier, only: Optional[str] = None) -> None:
     from playwright.sync_api import sync_playwright  # import tardio: facilita testes
 
@@ -185,6 +218,7 @@ def run_cycle(settings: Settings, notifier: TelegramNotifier, only: Optional[str
 
     counts = {"ok": 0, "error": 0, "alert": 0, "crash": 0}
     failing: list[tuple[dict, str]] = []
+    coupon_batch: list[tuple[dict, list[str]]] = []
     with sync_playwright() as pw:
         browser = _launch_browser(pw, settings)
         try:
@@ -198,6 +232,8 @@ def run_cycle(settings: Settings, notifier: TelegramNotifier, only: Optional[str
                         product, snap, settings, notifier,
                         rescrape=lambda p=product, b=browser: scrape_product(b, p, settings),
                     )
+                    if not snap.error and snap.coupons:
+                        coupon_batch.append((product, snap.coupons))
                     if status == "error" and settings.fail_notice_after and \
                             db.get_consecutive_errors(settings.db_path, product["id"]) == settings.fail_notice_after:
                         failing.append((product, snap.error or ""))
@@ -217,6 +253,11 @@ def run_cycle(settings: Settings, notifier: TelegramNotifier, only: Optional[str
              counts["ok"], counts["error"], counts["alert"], counts["crash"])
     if failing and notifier.configured:
         _send_failure_notice(notifier, failing, settings)
+    if coupon_batch and settings.notify_coupons and notifier.configured:
+        try:
+            send_coupon_digest(coupon_batch, settings, notifier)
+        except Exception:  # noqa: BLE001 — falha nos cupons não pode estragar a rodada
+            log.exception("Erro ao enviar resumo de cupons")
 
 
 def show_stats(settings: Settings) -> None:

@@ -44,6 +44,8 @@ class Settings:
     products_path: str
     log_file: str
     debug_dir: str
+    notify_coupons: bool = True
+    coupon_renotify_hours: float = 168.0
 
 
 def load_settings() -> Settings:
@@ -67,4 +69,6 @@ def load_settings() -> Settings:
         products_path=os.getenv("PRODUCTS_PATH", "products.json"),
         log_file=os.getenv("LOG_FILE", "monitor.log"),
         debug_dir=os.getenv("DEBUG_DIR", "").strip(),
+        notify_coupons=_bool("NOTIFY_COUPONS", "true"),
+        coupon_renotify_hours=_num("COUPON_RENOTIFY_HOURS", "168", float, 0),
     )

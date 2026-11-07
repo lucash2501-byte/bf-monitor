@@ -142,3 +142,68 @@ def test_confirmation_error_postpones_alert(settings):
         status = main.process_product(PRODUCT, good(250), settings, n,
                                       rescrape=lambda: Snapshot(error="timeout"))
     assert status == "ok" and not n.sent
+
+
+# ------------------------------------------------------------------ cupons no Telegram
+HERING = {"id": "h1", "name": "Camiseta Hering", "url": "https://www.hering.com.br/p1", "target_price": 1}
+HERING2 = {"id": "h2", "name": "Outra Hering", "url": "https://hering.com.br/p2", "target_price": 1}
+RENNER = {"id": "r1", "name": "Camisa Renner", "url": "https://www.lojasrenner.com.br/p", "target_price": 1}
+
+
+def test_coupon_digest_one_message_per_store_and_deduped(settings):
+    db.init_db(settings.db_path)
+    n = FakeNotifier()
+    batch = [(HERING, ["BLACK10 — 10% OFF", "FRETE15"]), (HERING2, ["BLACK10 — 10% OFF"]),
+             (RENNER, ["use o cupom RENNER20 e ganhe 20%"])]
+    assert main.send_coupon_digest(batch, settings, n) == 2          # hering.com.br (www e sem www = mesma loja) + renner
+    hering = next(m for m in n.sent if "hering.com.br" in m.split("\n")[0])
+    assert hering.count("BLACK10") == 1 and "FRETE15" in hering and "Camiseta Hering" in hering
+
+
+def test_coupon_not_repeated_but_new_ones_are_sent(settings):
+    db.init_db(settings.db_path)
+    n = FakeNotifier()
+    assert main.send_coupon_digest([(HERING, ["BLACK10"])], settings, n) == 1
+    assert main.send_coupon_digest([(HERING, ["black10"])], settings, n) == 0               # igual (caixa/espaços ignorados)
+    assert main.send_coupon_digest([(HERING, ["BLACK10", "NOVO20"])], settings, n) == 1     # só o novo
+    assert "NOVO20" in n.sent[-1] and "BLACK10" not in n.sent[-1]
+
+
+def test_coupon_renotify_after_window(settings):
+    db.init_db(settings.db_path)
+    n = FakeNotifier()
+    main.send_coupon_digest([(HERING, ["BLACK10"])], settings, n)
+    with db.connect(settings.db_path) as conn:  # finge que o aviso foi há 8 dias
+        conn.execute("UPDATE coupons_seen SET last_notified = datetime('now', '-8 days')")
+    assert main.send_coupon_digest([(HERING, ["BLACK10"])], settings, n) == 1               # janela de 168h passou
+    never = make_settings_no_renotify(settings)
+    with db.connect(settings.db_path) as conn:
+        conn.execute("UPDATE coupons_seen SET last_notified = datetime('now', '-30 days')")
+    assert main.send_coupon_digest([(HERING, ["BLACK10"])], never, n) == 0                  # 0 = nunca repete
+
+
+def make_settings_no_renotify(settings):
+    import dataclasses
+    return dataclasses.replace(settings, coupon_renotify_hours=0)
+
+
+def test_failed_send_does_not_mark_coupon_as_notified(settings):
+    db.init_db(settings.db_path)
+    assert main.send_coupon_digest([(HERING, ["BLACK10"])], settings, FakeNotifier(ok=False)) == 0
+    assert main.send_coupon_digest([(HERING, ["BLACK10"])], settings, FakeNotifier()) == 1   # tenta de novo
+
+
+def test_coupon_digest_caps_messages_and_carries_over(settings):
+    db.init_db(settings.db_path)
+    n = FakeNotifier()
+    many = [f"CUPOM{i:02d}" for i in range(12)]
+    main.send_coupon_digest([(HERING, many)], settings, n)
+    assert n.sent[0].count("• ") == main.MAX_COUPONS_PER_MESSAGE
+    main.send_coupon_digest([(HERING, many)], settings, n)                                   # sobra vai na rodada seguinte
+    assert n.sent[1].count("• ") == 4 and "CUPOM11" in n.sent[1]
+
+
+def test_coupon_message_escapes_html():
+    from notifier import build_coupon_message
+    msg = build_coupon_message("loja.com", ["<b>10%</b> & mais"], "https://l.com/p?a=1&b=2", "Tênis <X>")
+    assert "&lt;b&gt;10%&lt;/b&gt; &amp; mais" in msg and "a=1&amp;b=2" in msg and "Tênis &lt;X&gt;" in msg
