@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   monitor:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # fixo: o 'latest' está migrando para outra versão e pode quebrar a instalação do Chromium
     timeout-minutes: 50
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -35,8 +35,11 @@ jobs:
 
       - name: Instalar dependências
         run: |
-          pip install -r requirements.txt
-          playwright install --with-deps chromium
+          for i in 1 2 3; do
+            pip install -r requirements.txt && playwright install --with-deps chromium && break
+            echo "Tentativa $i de instalar falhou; esperando para repetir..."; sleep 20
+            [ "$i" = 3 ] && exit 1
+          done
 
       - name: Verificar configuração do Telegram
         run: |
