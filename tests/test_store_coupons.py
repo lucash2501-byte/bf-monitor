@@ -29,7 +29,7 @@ def test_repo_stores_file_is_valid():
 
 def test_run_sends_new_store_coupons_once_and_checks_periodically(browser, base_url, tmp_path, monkeypatch):  # noqa: F811
     monkeypatch.setattr(store_coupons, "load_stores", lambda path=None: stores(base_url))
-    settings = make_settings(tmp_path, store_coupons_enabled=True, store_coupons_every_hours=2.0)
+    settings = make_settings(tmp_path, store_coupons_enabled=True, store_coupons_every_hours=2.0, notify_coupons=True)
     db.init_db(settings.db_path)
     n = Notifier()
     stats = store_coupons.run_store_coupons(browser, settings, n, main.send_coupon_digest)
@@ -66,7 +66,7 @@ def test_second_page_of_a_store_is_merged_and_first_failure_tolerated(browser, b
 def test_aggregator_entry_uses_its_own_label_and_does_not_mix_with_the_store(browser, base_url, tmp_path, monkeypatch):  # noqa: F811
     entries = [{"name": "Loja (via agregadores)", "label": "Loja — via agregador", "urls": [f"{base_url}/jsonld_sizes.html"]}]
     monkeypatch.setattr(store_coupons, "load_stores", lambda path=None: entries)
-    settings = make_settings(tmp_path, store_coupons_enabled=True)
+    settings = make_settings(tmp_path, store_coupons_enabled=True, notify_coupons=True)
     db.init_db(settings.db_path)
     n = Notifier()
     store_coupons.run_store_coupons(browser, settings, n, main.send_coupon_digest)

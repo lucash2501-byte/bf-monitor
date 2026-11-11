@@ -19,6 +19,7 @@ git init -q -b data
 git config user.name "bf-monitor"
 git config user.email "bf-monitor@users.noreply.github.com"
 git add prices.db
+[ -f coupons.json ] && git add coupons.json   # o bot do Telegram lê este arquivo
 git commit -q -m "Histórico de preços $(date -u '+%Y-%m-%d %H:%M UTC')"
 git push -q --force "$REMOTE" data:data
 echo "Histórico salvo."

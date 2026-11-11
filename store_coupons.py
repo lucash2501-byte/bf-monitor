@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import re
+from datetime import datetime, timezone
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -49,6 +50,10 @@ def load_stores(path: str = STORES_PATH) -> list[dict]:
         urls = [u for u in urls if isinstance(u, str) and u.startswith(("http://", "https://"))]
         if urls:
             entry = {"name": item["name"], "urls": urls}
+            if item.get("store"):          # entrada de agregador: a que loja os cupons pertencem
+                entry["store"] = str(item["store"])
+            if isinstance(item.get("aliases"), list):
+                entry["aliases"] = [str(a) for a in item["aliases"]]
             if item.get("label"):          # cupom vindo de agregador: chave própria, para não misturar lojas
                 entry["label"] = str(item["label"])
             out.append(entry)
@@ -138,6 +143,14 @@ def run_store_coupons(browser, settings, notifier, send_digest) -> dict:
         coupons, err, url = read_store(browser, store, settings)
         stats["checked"] += 1
         db.mark_store_checked(settings.db_path, name)     # mesmo com erro: não martela uma loja que bloqueia
+        base = store.get("store") or name
+        if store.get("label"):                            # agregador: não sobrescreve o status da loja de verdade
+            if coupons:
+                db.cache_coupons(settings.db_path, base, coupons, "agregador")
+        else:
+            db.set_store_status(settings.db_path, base, err)
+            if coupons:
+                db.cache_coupons(settings.db_path, base, coupons, "loja")
         if err:
             stats["errors"] += 1
             log.info("[%s] cupons da loja: %s", name, err)
@@ -169,3 +182,67 @@ def debug_stores(browser, settings) -> list[str]:
         if not coupons or len(store["urls"]) > 1:
             lines += [f"        ↳ {n}" for n in notes]
     return lines
+
+
+# ------------------------------------------------------------------ cache para o bot do Telegram
+def _host(url: str) -> str:
+    return urlparse(url).netloc.lower().removeprefix("www.")
+
+
+def store_for_url(url: str, stores: Optional[list[dict]] = None) -> str:
+    """Nome da loja (de stores.json) a que uma URL de produto pertence; sem cadastro, usa o próprio domínio."""
+    host = _host(url)
+    for st in stores if stores is not None else load_stores():
+        if st.get("label"):
+            continue
+        for u in st["urls"]:
+            h = _host(u)
+            if host == h or host.endswith("." + h):
+                return st["name"]
+    return host
+
+
+def cache_product_coupons(settings, product: dict, coupons: list[str]) -> None:
+    """Os cupons lidos na página de um produto também entram no cache da loja dele."""
+    if coupons:
+        try:
+            db.cache_coupons(settings.db_path, store_for_url(product["url"]), coupons, "produto")
+        except Exception:  # noqa: BLE001 — cache é um extra
+            log.exception("Falha ao guardar cupons no cache")
+
+
+CACHE_MAX_AGE_HOURS = 36.0
+
+
+def build_export(settings, stores: Optional[list[dict]] = None) -> dict:
+    """Dados que o bot consulta: cada loja de stores.json com seus cupons recentes e quando foi conferida."""
+    stores = stores if stores is not None else load_stores()
+    cached = db.get_cached_coupons(settings.db_path, CACHE_MAX_AGE_HOURS)
+    status = db.get_store_statuses(settings.db_path)
+    by_store: dict[str, list[dict]] = {}
+    for store_name, text, source, seen in cached:
+        by_store.setdefault(store_name, []).append({"text": text, "source": source, "seen_at": seen.replace(" ", "T") + "Z"})
+    out, known = [], set()
+    for st in stores:
+        if st.get("label"):
+            continue
+        name = st["name"]
+        known.add(name)
+        checked, err = status.get(name, (None, None))
+        core = _host(st["urls"][0]).split(".")[0]
+        out.append({"name": name, "aliases": sorted({core, *st.get("aliases", [])}), "url": st["urls"][0],
+                    "checked_at": checked.replace(" ", "T") + "Z" if checked else None, "error": err,
+                    "coupons": by_store.get(name, [])})
+    for name, coupons in by_store.items():           # lojas que só aparecem por produto cadastrado
+        if name not in known:
+            out.append({"name": name, "aliases": [name.split(".")[0]], "url": f"https://{name}/", "checked_at": None,
+                        "error": None, "coupons": coupons})
+    return {"generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "stores": out}
+
+
+def export_json(settings, path: Optional[str] = None) -> str:
+    """Grava coupons.json ao lado do banco (a branch 'data' o publica para o bot)."""
+    path = path or os.path.join(os.path.dirname(settings.db_path) or ".", "coupons.json")
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(build_export(settings), fh, ensure_ascii=False, indent=1)
+    return path

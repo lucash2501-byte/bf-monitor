@@ -14,6 +14,7 @@ confere o estoque da sua variação/tamanho e avisa no Telegram com os cupons en
 ├── search_stores.json  # lojas onde a busca é feita (edite para incluir/remover)
 ├── store_coupons.py # vigia cupons na página inicial das lojas de stores.json
 ├── stores.json      # lojas para vigiar cupons (sem precisar de produto)
+├── worker/          # bot de consulta: você manda "renner" no Telegram e ele responde com os cupons
 ├── analyzer.py      # regras de alerta (alvo + estoque + desconto real)
 ├── notifier.py      # Telegram
 ├── db.py            # SQLite (histórico de preços e alertas)
@@ -135,6 +136,28 @@ Para mandar para um **canal** em vez da conversa privada: adicione o bot como ad
 O monitor só lê o que a loja **publica**. Ele não adivinha códigos nem testa cupons no carrinho. Cupons de
 e-mail, de primeira compra ou ligados à sua conta só aparecem se a loja os mostrar na página. Trate a lista como
 sugestão: confirme no carrinho antes de contar com o desconto.
+
+## Consultar cupons pelo Telegram ("renner")
+
+Por padrão o monitor **não manda mais cupons sozinho** (`NOTIFY_COUPONS=false`); só avisa quando um produto do
+`products.json` tem **desconto real** (`MIN_DISCOUNT_PCT=10`, ou seja, pelo menos 10% abaixo do histórico).
+Os cupons ficam guardados e você pergunta quando for comprar: manda o nome da loja no chat do bot e ele responde.
+
+Como funciona: a cada rodada o monitor grava `coupons.json` na branch `data`; um bot gratuito no Cloudflare Workers
+(`worker/worker.js`) lê esse arquivo e responde. Os dados têm a idade da última rodada (o bot informa "conferido há X").
+Mensagens aceitas: `renner`, `cupons da Renner`, `/lojas` (lista as lojas), `/ajuda`. Só o seu chat é atendido.
+
+**Configurar (uma vez, ~5 minutos, tudo pelo site):**
+1. Crie uma conta grátis em <https://dash.cloudflare.com> (não precisa de cartão).
+2. **Workers & Pages → Create → Create Worker**, nome `bf-cupons` → **Deploy** → **Edit code**. Apague o código de exemplo,
+   cole o conteúdo de `worker/worker.js` e clique em **Deploy**.
+3. **Settings → Variables and Secrets → Add**: `BOT_TOKEN` (tipo *Secret*: o token do BotFather), `WEBHOOK_SECRET`
+   (tipo *Secret*: uma frase longa qualquer que você inventar) e `CHAT_ID` (tipo *Text*: o seu chat id). **Deploy**.
+4. Abra no navegador `https://bf-cupons.SEU-SUBDOMINIO.workers.dev/setup` (a URL aparece na página do Worker).
+   Deve responder "Pronto! O bot está ligado.".
+5. No Telegram, mande `renner` para o bot.
+
+Teste do bot (sem internet): `node worker/test.mjs`.
 
 ## Cupons por loja (sem produto)
 

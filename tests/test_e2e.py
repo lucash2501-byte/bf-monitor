@@ -42,7 +42,7 @@ def test_full_cycle_alert_failure_notice_and_crash_isolation(tmp_path, base_url)
     ]
     path = tmp_path / "products.json"
     path.write_text(json.dumps(products), encoding="utf-8")
-    settings = make_settings(tmp_path, products_path=str(path), fail_notice_after=1)
+    settings = make_settings(tmp_path, products_path=str(path), fail_notice_after=1, notify_coupons=True)
     db.init_db(settings.db_path)
     seed(settings, "deal", 400.0)      # histórico a R$ 400 -> R$ 250 é desconto real (37,5%)
     seed(settings, "caro", 400.0)      # R$ 399,90 não é desconto

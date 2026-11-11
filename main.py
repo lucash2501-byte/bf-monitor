@@ -253,6 +253,9 @@ def run_cycle(settings: Settings, notifier: TelegramNotifier, only: Optional[str
                         product, snap, settings, notifier,
                         rescrape=lambda p=product, b=browser: scrape_product(b, p, settings),
                     )
+                    if not snap.error and snap.coupons:
+                        import store_coupons
+                        store_coupons.cache_product_coupons(settings, product, snap.coupons)
                     if not snap.error and snap.coupons and settings.notify_coupons and notifier.configured:
                         try:   # manda na hora (não espera a rodada acabar); cupom já avisado não se repete
                             send_coupon_digest([(product, snap.coupons)], settings, notifier)
@@ -285,6 +288,11 @@ def run_cycle(settings: Settings, notifier: TelegramNotifier, only: Optional[str
             except Exception:  # noqa: BLE001
                 pass
 
+    try:
+        import store_coupons
+        log.info("Cupons para o bot salvos em %s", store_coupons.export_json(settings))
+    except Exception:  # noqa: BLE001 — o bot de consulta é um extra
+        log.exception("Falha ao exportar cupons")
     log.info("Rodada concluída: %d ok | %d com erro | %d alerta(s) | %d falha(s) inesperada(s)",
              counts["ok"], counts["error"], counts["alert"], counts["crash"])
     if failing and notifier.configured:

@@ -46,6 +46,19 @@ CREATE TABLE IF NOT EXISTS store_checks (
     name TEXT PRIMARY KEY,
     ts TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS coupon_cache (
+    store TEXT NOT NULL,
+    text TEXT NOT NULL,
+    source TEXT NOT NULL,          -- loja | produto | agregador
+    first_seen TEXT NOT NULL,
+    last_seen TEXT NOT NULL,
+    PRIMARY KEY (store, text)
+);
+CREATE TABLE IF NOT EXISTS store_status (
+    store TEXT PRIMARY KEY,
+    ts TEXT NOT NULL,
+    error TEXT
+);
 CREATE TABLE IF NOT EXISTS compare_searches (
     product_id TEXT PRIMARY KEY,
     ts TEXT NOT NULL
@@ -244,3 +257,35 @@ def hours_since_store_check(db_path: str, name: str) -> Optional[float]:
 def mark_store_checked(db_path: str, name: str) -> None:
     with connect(db_path) as conn:
         conn.execute("INSERT OR REPLACE INTO store_checks (name, ts) VALUES (?, ?)", (name, _now()))
+
+
+# ------------------------------------------------------------------ cache de cupons (consultado pelo bot do Telegram)
+def cache_coupons(db_path: str, store: str, texts: list[str], source: str) -> None:
+    """Guarda/atualiza os cupons vistos agora numa loja. Um cupom que some da página para de ser exportado
+    (ver `get_cached_coupons`), sem precisar apagar nada."""
+    now = _now()
+    with connect(db_path) as conn:
+        for text in texts:
+            t = " ".join(text.split())
+            if t:
+                conn.execute(
+                    "INSERT INTO coupon_cache (store, text, source, first_seen, last_seen) VALUES (?, ?, ?, ?, ?) "
+                    "ON CONFLICT(store, text) DO UPDATE SET last_seen = excluded.last_seen, source = excluded.source",
+                    (store, t, source, now, now))
+
+
+def set_store_status(db_path: str, store: str, error: Optional[str]) -> None:
+    with connect(db_path) as conn:
+        conn.execute("INSERT OR REPLACE INTO store_status (store, ts, error) VALUES (?, ?, ?)", (store, _now(), error))
+
+
+def get_store_statuses(db_path: str) -> dict[str, tuple[str, Optional[str]]]:
+    with connect(db_path) as conn:
+        return {r["store"]: (r["ts"], r["error"]) for r in conn.execute("SELECT store, ts, error FROM store_status")}
+
+
+def get_cached_coupons(db_path: str, max_age_hours: float) -> list[tuple[str, str, str, str]]:
+    """(loja, texto, origem, visto_em) dos cupons vistos nas últimas `max_age_hours` horas."""
+    with connect(db_path) as conn:
+        rows = conn.execute("SELECT store, text, source, last_seen FROM coupon_cache ORDER BY store, last_seen DESC").fetchall()
+    return [(r["store"], r["text"], r["source"], r["last_seen"]) for r in rows if hours_since(r["last_seen"]) <= max_age_hours]
