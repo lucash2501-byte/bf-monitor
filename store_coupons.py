@@ -246,3 +246,14 @@ def export_json(settings, path: Optional[str] = None) -> str:
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(build_export(settings), fh, ensure_ascii=False, indent=1)
     return path
+
+
+def cached_coupons_for_url(settings, url: str, limit: int = 6) -> list[str]:
+    """Cupons recentes da loja de uma URL (página da loja e de produtos já lidos; agregadores ficam de fora)."""
+    try:
+        store = store_for_url(url)
+        return [t for s_, t, src, _ in db.get_cached_coupons(settings.db_path, CACHE_MAX_AGE_HOURS)
+                if s_ == store and src != "agregador"][:limit]
+    except Exception:  # noqa: BLE001 — extra: não pode impedir o alerta
+        log.exception("Falha ao buscar cupons da loja no cache")
+        return []

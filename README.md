@@ -140,7 +140,7 @@ sugestão: confirme no carrinho antes de contar com o desconto.
 ## Consultar cupons pelo Telegram ("renner")
 
 Por padrão o monitor **não manda mais cupons sozinho** (`NOTIFY_COUPONS=false`); só avisa quando um produto do
-`products.json` tem **desconto real** (`MIN_DISCOUNT_PCT=10`, ou seja, pelo menos 10% abaixo do histórico).
+`products.json` tem **desconto real** (`MIN_DISCOUNT_PCT=20`, ou seja, pelo menos 20% abaixo do histórico).
 Os cupons ficam guardados e você pergunta quando for comprar: manda o nome da loja no chat do bot e ele responde.
 
 Como funciona: a cada rodada o monitor grava `coupons.json` na branch `data`; um bot gratuito no Cloudflare Workers
@@ -173,7 +173,7 @@ Run workflow** (ou `python main.py --stores-test`). Lojas que bloqueiam IP de da
 
 O monitor procura o **mesmo modelo** (marca + modelo + número + cor, tirados do `name` do produto) na busca das
 lojas listadas em `search_stores.json` e avisa no Telegram quando uma outra loja está **pelo menos
-`COMPARE_MIN_DIFF_PCT`% (padrão 5%) mais barata** que a loja principal, ou abaixo do seu preço-alvo.
+`COMPARE_MIN_DIFF_PCT`% (padrão 20%) mais barata** que a loja principal, ou abaixo do seu preço-alvo.
 
 - É **busca automática**: o aviso diz "confira modelo, cor e tamanho antes de comprar". Ele descarta resultados com outro
   número de modelo (41 ≠ 40), outra cor, outro gênero ou infantil, mas a loja pode ter variações que o texto não revela.

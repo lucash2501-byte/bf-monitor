@@ -220,3 +220,15 @@ def test_failure_notice_is_grouped_by_store(settings):
     assert "<b>mercadolivre.com.br</b> (5)" in msg and "e mais 2" in msg and "verificação/captcha" in msg
     assert "<b>netshoes.com.br</b> (1)" in msg and "HTTP 403" in msg and "Tênis &lt;X&gt;" in msg
     assert msg.count("•") == 2          # uma linha por loja, não por produto
+
+
+def test_alert_includes_store_coupons_already_seen(settings):
+    """Na hora do alerta entram também os cupons que o monitor viu na loja (cache), sem repetir os da página."""
+    seed_history(settings)
+    db.cache_coupons(settings.db_path, "l.com", ["EXTRA20 — 20% OFF", "FRETE10"], "loja")
+    db.cache_coupons(settings.db_path, "l.com", ["LIXO99"], "agregador")           # agregador não entra
+    n = FakeNotifier()
+    snap = Snapshot(price_cash=250.0, in_stock=True, coupons=["FRETE10"])
+    assert main.process_product(PRODUCT, snap, settings, n) == "alert"
+    msg = n.sent[0]
+    assert "EXTRA20" in msg and msg.count("FRETE10") == 1 and "LIXO99" not in msg

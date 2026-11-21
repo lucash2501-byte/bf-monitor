@@ -1,14 +1,5 @@
 [
   {
-    "id": "olympikus-corre-max-centauro",
-    "name": "Tênis Unissex Olympikus Corre Max",
-    "url": "https://www.centauro.com.br/tenis-unissex-olympikus-corre-max-990670.html?cor=H3",
-    "target_price": 449.98,
-    "variations": [
-      "40"
-    ]
-  },
-  {
     "id": "mizuno-cool-ride-4-netshoes",
     "name": "Tênis Mizuno Cool Ride 4",
     "url": "https://clube.netshoes.com.br/p/tenis-mizuno-cool-ride-4-SIC-00PJ-006",
@@ -323,6 +314,20 @@
     "name": "Edredom Casal Microfibra Azul Riachuelo",
     "url": "https://www.riachuelo.com.br/edredom-casal-em-microfibra-azul-casa-riachuelo-16256891001_sku",
     "target_price": 89.98,
+    "variations": []
+  },
+  {
+    "id": "mercadolivre-mizuno-hawk-6",
+    "name": "Tênis Mizuno Masculino Hawk 6 (Mercado Livre)",
+    "url": "https://www.mercadolivre.com.br/tenis-mizuno-masculino-hawk-6/up/MLBU4882858314?pdp_filters=item_id%3AMLB7471610508",
+    "target_price": 99999.0,
+    "variations": []
+  },
+  {
+    "id": "parolli-blusa-oversized-quarter-zip",
+    "name": "Blusa Oversized Quarter Zip Moletom (Parolli)",
+    "url": "https://www.parolli.com.br/produtos/blusa-oversized-quarter-zip-moletom/",
+    "target_price": 99999.0,
     "variations": []
   }
 ]

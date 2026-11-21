@@ -136,6 +136,11 @@ def process_product(product: dict, snap: Snapshot, settings: Settings, notifier:
             return "ok"
         snap, decision = snap2, decision2
 
+    # além dos cupons da página do produto, junta os que o monitor já viu na loja (na hora de comprar interessa tudo)
+    import store_coupons
+    extra = [c for c in store_coupons.cached_coupons_for_url(settings, product["url"]) if c not in snap.coupons]
+    snap.coupons = (list(snap.coupons) + extra)[:6]
+
     if notifier.send(build_alert_message(product, snap, decision)):
         db.save_alert(settings.db_path, pid, snap.price_cash)
         log.info("[%s] 🔔 ALERTA ENVIADO", product["name"])
