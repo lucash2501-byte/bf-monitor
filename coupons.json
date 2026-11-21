@@ -1,0 +1,439 @@
+{
+ "generated_at": "2026-11-21T06:44:40Z",
+ "stores": [
+  {
+   "name": "Mercado Livre",
+   "aliases": [
+    "meli",
+    "mercadolivre",
+    "ml"
+   ],
+   "url": "https://www.mercadolivre.com.br/",
+   "checked_at": "2026-11-21T06:31:34Z",
+   "error": null,
+   "coupons": [
+    {
+     "text": "10% OFF com Cupom",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:31:34Z"
+    },
+    {
+     "text": "15% OFF com Cupom",
+     "source": "loja",
+     "seen_at": "2026-11-20T09:07:40Z"
+    }
+   ]
+  },
+  {
+   "name": "Shopee",
+   "aliases": [
+    "shopee"
+   ],
+   "url": "https://shopee.com.br/",
+   "checked_at": "2026-11-21T06:31:42Z",
+   "error": "pediu verificação/captcha (shopee.com.br)",
+   "coupons": []
+  },
+  {
+   "name": "Olympikus",
+   "aliases": [
+    "olympikus"
+   ],
+   "url": "https://www.olympikus.com.br/",
+   "checked_at": "2026-11-21T06:31:54Z",
+   "error": null,
+   "coupons": []
+  },
+  {
+   "name": "Centauro",
+   "aliases": [
+    "centauro"
+   ],
+   "url": "https://www.centauro.com.br/",
+   "checked_at": "2026-11-21T06:31:54Z",
+   "error": "HTTP 403",
+   "coupons": []
+  },
+  {
+   "name": "Netshoes",
+   "aliases": [
+    "netshoes"
+   ],
+   "url": "https://www.netshoes.com.br/",
+   "checked_at": "2026-11-21T06:31:54Z",
+   "error": "HTTP 403",
+   "coupons": [
+    {
+     "text": "NETS20",
+     "source": "agregador",
+     "seen_at": "2026-11-21T06:34:49Z"
+    },
+    {
+     "text": "OFERTANETS",
+     "source": "agregador",
+     "seen_at": "2026-11-21T06:34:49Z"
+    },
+    {
+     "text": "PROMONETS",
+     "source": "agregador",
+     "seen_at": "2026-11-21T06:34:49Z"
+    },
+    {
+     "text": "BLACK11",
+     "source": "agregador",
+     "seen_at": "2026-11-20T17:57:26Z"
+    }
+   ]
+  },
+  {
+   "name": "Decathlon",
+   "aliases": [
+    "decathlon"
+   ],
+   "url": "https://www.decathlon.com.br/",
+   "checked_at": "2026-11-21T06:32:06Z",
+   "error": null,
+   "coupons": [
+    {
+     "text": "Cupom: OFERTAS10",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:32:06Z"
+    },
+    {
+     "text": "Cupom: ESPORTE10",
+     "source": "loja",
+     "seen_at": "2026-11-20T09:08:07Z"
+    }
+   ]
+  },
+  {
+   "name": "Velocità",
+   "aliases": [
+    "velocita"
+   ],
+   "url": "https://www.velocita.com.br/",
+   "checked_at": "2026-11-21T06:32:10Z",
+   "error": null,
+   "coupons": [
+    {
+     "text": "Cupom: PIX10",
+     "source": "loja",
+     "seen_at": "2026-11-20T17:54:52Z"
+    },
+    {
+     "text": "Cupom: RELAMPAGO10",
+     "source": "loja",
+     "seen_at": "2026-11-20T17:54:52Z"
+    },
+    {
+     "text": "Cupom: RELAMPAGO15",
+     "source": "loja",
+     "seen_at": "2026-11-20T17:54:52Z"
+    }
+   ]
+  },
+  {
+   "name": "Authentic Feet",
+   "aliases": [
+    "authenticfeet"
+   ],
+   "url": "https://www.authenticfeet.com.br/",
+   "checked_at": "2026-11-21T06:32:21Z",
+   "error": null,
+   "coupons": []
+  },
+  {
+   "name": "Artwalk",
+   "aliases": [
+    "artwalk"
+   ],
+   "url": "https://www.artwalk.com.br/",
+   "checked_at": "2026-11-21T06:32:32Z",
+   "error": null,
+   "coupons": []
+  },
+  {
+   "name": "Zattini",
+   "aliases": [
+    "zattini"
+   ],
+   "url": "https://www.zattini.com.br/",
+   "checked_at": "2026-11-21T06:32:32Z",
+   "error": "HTTP 403",
+   "coupons": []
+  },
+  {
+   "name": "Dafiti",
+   "aliases": [
+    "dafiti"
+   ],
+   "url": "https://www.dafiti.com.br/",
+   "checked_at": "2026-11-21T06:32:42Z",
+   "error": null,
+   "coupons": []
+  },
+  {
+   "name": "C&A",
+   "aliases": [
+    "c&a",
+    "cea"
+   ],
+   "url": "https://www.cea.com.br/",
+   "checked_at": "2026-11-21T06:32:54Z",
+   "error": null,
+   "coupons": [
+    {
+     "text": "Ganhe 35%OFF cupom VEMBLACK",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:32:54Z"
+    }
+   ]
+  },
+  {
+   "name": "Hering",
+   "aliases": [
+    "hering"
+   ],
+   "url": "https://www.hering.com.br/",
+   "checked_at": "2026-11-21T06:33:05Z",
+   "error": null,
+   "coupons": [
+    {
+     "text": "EXTRA10 — CUPOM:",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:33:05Z"
+    },
+    {
+     "text": "PRIMEIRA15",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:33:05Z"
+    },
+    {
+     "text": "PRIMEIRA20",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:33:05Z"
+    }
+   ]
+  },
+  {
+   "name": "Renner",
+   "aliases": [
+    "lojasrenner",
+    "renner"
+   ],
+   "url": "https://www.lojasrenner.com.br/",
+   "checked_at": "2026-11-21T06:33:17Z",
+   "error": null,
+   "coupons": [
+    {
+     "text": "use o cupom: VOUDEAPP",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:33:17Z"
+    }
+   ]
+  },
+  {
+   "name": "Riachuelo",
+   "aliases": [
+    "riachuelo"
+   ],
+   "url": "https://www.riachuelo.com.br/",
+   "checked_at": "2026-11-21T06:33:17Z",
+   "error": "HTTP 403",
+   "coupons": []
+  },
+  {
+   "name": "Youcom",
+   "aliases": [
+    "youcom"
+   ],
+   "url": "https://www.youcom.com.br/",
+   "checked_at": "2026-11-21T06:33:24Z",
+   "error": null,
+   "coupons": [
+    {
+     "text": "até 20%OFF* na lista com o cupom: PROGRESSIVA",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:33:24Z"
+    },
+    {
+     "text": "cupom: PRIMEIRA10",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:33:24Z"
+    }
+   ]
+  },
+  {
+   "name": "Reserva",
+   "aliases": [
+    "usereserva"
+   ],
+   "url": "https://www.usereserva.com/",
+   "checked_at": "2026-11-21T06:33:35Z",
+   "error": null,
+   "coupons": [
+    {
+     "text": "GANHE20",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:33:35Z"
+    },
+    {
+     "text": "LIVE20",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:33:35Z"
+    }
+   ]
+  },
+  {
+   "name": "Chico Rei",
+   "aliases": [
+    "chicorei"
+   ],
+   "url": "https://www.chicorei.com/",
+   "checked_at": "2026-11-21T06:33:40Z",
+   "error": null,
+   "coupons": []
+  },
+  {
+   "name": "Damyller",
+   "aliases": [
+    "damyller"
+   ],
+   "url": "https://www.damyller.com.br/",
+   "checked_at": "2026-11-21T06:33:45Z",
+   "error": null,
+   "coupons": []
+  },
+  {
+   "name": "Shein",
+   "aliases": [
+    "br"
+   ],
+   "url": "https://br.shein.com/",
+   "checked_at": "2026-11-21T06:33:57Z",
+   "error": null,
+   "coupons": [
+    {
+     "text": "brugsf031808",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:33:57Z"
+    },
+    {
+     "text": "first1",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:33:57Z"
+    }
+   ]
+  },
+  {
+   "name": "Guess Brasil",
+   "aliases": [
+    "guessbrasil"
+   ],
+   "url": "https://www.guessbrasil.com.br/",
+   "checked_at": "2026-11-21T06:34:09Z",
+   "error": null,
+   "coupons": [
+    {
+     "text": "Cupom: PREBLACK",
+     "source": "loja",
+     "seen_at": "2026-11-21T00:01:58Z"
+    }
+   ]
+  },
+  {
+   "name": "Morena Rosa",
+   "aliases": [
+    "morenarosa"
+   ],
+   "url": "https://www.morenarosa.com.br/",
+   "checked_at": "2026-11-21T06:34:14Z",
+   "error": null,
+   "coupons": [
+    {
+     "text": "GANHE 15% OFF NA SUA 1° COMPRA USANDO O CUPOM: PRIMEIRAMR *",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:34:14Z"
+    }
+   ]
+  },
+  {
+   "name": "Hugo Boss",
+   "aliases": [
+    "hugoboss"
+   ],
+   "url": "https://www.hugoboss.com.br/",
+   "checked_at": "2026-11-21T06:34:19Z",
+   "error": null,
+   "coupons": [
+    {
+     "text": "Preencha o formulário e ganhe o cupom de 10% de desconto em sua primeira compra",
+     "source": "loja",
+     "seen_at": "2026-11-21T06:34:19Z"
+    }
+   ]
+  },
+  {
+   "name": "Zara",
+   "aliases": [
+    "zara"
+   ],
+   "url": "https://www.zara.com/br/",
+   "checked_at": "2026-11-21T06:34:19Z",
+   "error": "HTTP 403",
+   "coupons": []
+  },
+  {
+   "name": "lojamirante.com.br",
+   "aliases": [
+    "lojamirante"
+   ],
+   "url": "https://lojamirante.com.br/",
+   "checked_at": null,
+   "error": null,
+   "coupons": [
+    {
+     "text": "Cupom: BLACKMIRANTE para 12% OFF",
+     "source": "produto",
+     "seen_at": "2026-11-21T06:28:37Z"
+    },
+    {
+     "text": "com o cupom BLACKMIRANTE",
+     "source": "produto",
+     "seen_at": "2026-11-21T06:28:37Z"
+    }
+   ]
+  },
+  {
+   "name": "saintgermainbrand.com.br",
+   "aliases": [
+    "saintgermainbrand"
+   ],
+   "url": "https://saintgermainbrand.com.br/",
+   "checked_at": null,
+   "error": null,
+   "coupons": [
+    {
+     "text": "0ae860acb7",
+     "source": "produto",
+     "seen_at": "2026-11-21T06:30:08Z"
+    },
+    {
+     "text": "0eab048700",
+     "source": "produto",
+     "seen_at": "2026-11-21T06:30:08Z"
+    },
+    {
+     "text": "14a6fe84e7",
+     "source": "produto",
+     "seen_at": "2026-11-21T06:30:08Z"
+    },
+    {
+     "text": "cd767b545d",
+     "source": "produto",
+     "seen_at": "2026-11-21T06:30:08Z"
+    }
+   ]
+  }
+ ]
+}
