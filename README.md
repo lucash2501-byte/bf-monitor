@@ -173,7 +173,7 @@ Run workflow** (ou `python main.py --stores-test`). Lojas que bloqueiam IP de da
 
 O monitor procura o **mesmo modelo** (marca + modelo + número + cor, tirados do `name` do produto) na busca das
 lojas listadas em `search_stores.json` e avisa no Telegram quando uma outra loja está **pelo menos
-`COMPARE_MIN_DIFF_PCT`% (padrão 10%) mais barata** que a loja principal, ou abaixo do seu preço-alvo.
+`COMPARE_MIN_DIFF_PCT`% (padrão 15%) mais barata** que a loja principal, ou abaixo do seu preço-alvo.
 
 - É **busca automática**: o aviso diz "confira modelo, cor e tamanho antes de comprar". Ele descarta resultados com outro
   número de modelo (41 ≠ 40), outra cor, outro gênero ou infantil, mas a loja pode ter variações que o texto não revela.
