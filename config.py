@@ -47,7 +47,7 @@ class Settings:
     notify_coupons: bool = False
     coupon_renotify_hours: float = 168.0
     compare_enabled: bool = True
-    compare_min_diff_pct: float = 20.0
+    compare_min_diff_pct: float = 10.0
     compare_search_every_hours: float = 6.0
     compare_max_searches: int = 3
     compare_max_candidates: int = 4
@@ -63,7 +63,7 @@ def load_settings() -> Settings:
         history_days=_num("HISTORY_DAYS", "14", int, 1),
         min_history_samples=_num("MIN_HISTORY_SAMPLES", "8", int, 1),
         min_history_span_hours=_num("MIN_HISTORY_SPAN_HOURS", "24", float, 0),
-        min_discount_pct=_num("MIN_DISCOUNT_PCT", "20", float, 0),
+        min_discount_pct=_num("MIN_DISCOUNT_PCT", "10", float, 0),
         cooldown_hours=_num("ALERT_COOLDOWN_HOURS", "6", float, 0),
         allow_alert_without_history=_bool("ALLOW_ALERT_WITHOUT_HISTORY", "false"),
         alert_on_unknown_stock=_bool("ALERT_ON_UNKNOWN_STOCK", "true"),
@@ -79,7 +79,7 @@ def load_settings() -> Settings:
         notify_coupons=_bool("NOTIFY_COUPONS", "false"),
         coupon_renotify_hours=_num("COUPON_RENOTIFY_HOURS", "168", float, 0),
         compare_enabled=_bool("COMPARE_ENABLED", "true"),
-        compare_min_diff_pct=_num("COMPARE_MIN_DIFF_PCT", "20", float, 0),
+        compare_min_diff_pct=_num("COMPARE_MIN_DIFF_PCT", "10", float, 0),
         compare_search_every_hours=_num("COMPARE_SEARCH_EVERY_HOURS", "6", float, 0),
         compare_max_searches=_num("COMPARE_MAX_SEARCHES", "3", int, 0),
         compare_max_candidates=_num("COMPARE_MAX_CANDIDATES", "4", int, 1),

@@ -20,7 +20,7 @@ def test_defaults_do_not_push_coupons_and_discount_is_10(monkeypatch):
         monkeypatch.delenv(k, raising=False)
     importlib.reload(config)
     s = config.load_settings()
-    assert s.notify_coupons is False and s.min_discount_pct == 20
+    assert s.notify_coupons is False and s.min_discount_pct == 10
 
 
 def test_store_for_url_matches_subdomains_and_unknown_hosts():
