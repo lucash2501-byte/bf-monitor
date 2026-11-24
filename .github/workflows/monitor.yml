@@ -69,3 +69,15 @@ jobs:
           path: debug
           retention-days: 3
           if-no-files-found: ignore
+      - name: Avisar no Telegram se a rodada falhar
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ] || exit 0
+          curl -sS --max-time 20 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=⚠️ O monitor de preços falhou nesta rodada (bug ou queda do GitHub). Detalhes: ${RUN_URL}" \
+            --data-urlencode "disable_web_page_preview=true" > /dev/null || true

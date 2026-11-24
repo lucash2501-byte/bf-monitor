@@ -99,6 +99,24 @@ def load_products(path: str) -> list[dict]:
     return products
 
 
+def _send_suspect_notice(product: dict, price: float, ref: float, settings: Settings, notifier) -> None:
+    """Preço muito abaixo do que você viu: pode ser bug de leitura do monitor OU erro de preço da loja (oportunidade).
+    Avisa no máximo uma vez por dia por produto e não conta como alerta de desconto."""
+    key = f"{product['id']}#suspeita"
+    last = db.get_last_alert(settings.db_path, key)
+    if last and db.hours_since(last["ts"]) < settings.cooldown_hours:
+        return
+    e = html.escape
+    msg = (f"⚠️ <b>Leitura suspeita</b> — {e(product['name'])}\n\n"
+           f"O monitor leu <b>R$ {price:.2f}</b>, mas o preço que você informou é R$ {ref:.2f} "
+           f"({(1 - price / ref) * 100:.0f}% a menos).\n"
+           f"Pode ser <b>erro de leitura do monitor</b> (número errado da página) ou <b>erro de preço da loja</b> "
+           f"(oportunidade). Não é um alerta de desconto confirmado: confira no link.\n\n"
+           f'🔗 <a href="{e(product["url"], quote=True)}">Abrir produto</a>')
+    if notifier.send(msg):
+        db.save_alert(settings.db_path, key, price)
+
+
 def process_product(product: dict, snap: Snapshot, settings: Settings, notifier: TelegramNotifier,
                     rescrape: Optional[Callable[[], Snapshot]] = None) -> str:
     """Salva a leitura, decide se alerta e envia. Retorna 'error', 'ok' ou 'alert'."""
@@ -108,9 +126,12 @@ def process_product(product: dict, snap: Snapshot, settings: Settings, notifier:
             ref * PLAUSIBLE_MIN <= snap.price_cash <= ref * PLAUSIBLE_MAX):
         # Preço muito fora do que você viu na loja: quase sempre é número errado lido da página (valor de cupom,
         # parcela, selo...). Vira erro: não entra no histórico e não dispara alerta.
+        suspect_price = snap.price_cash
         snap = dataclasses.replace(
             snap, price_cash=None, price_installment=None,
-            error=f"Leitura improvável: R$ {snap.price_cash:.2f} (o esperado é perto de R$ {ref:.2f})")
+            error=f"Leitura improvável: R$ {suspect_price:.2f} (o esperado é perto de R$ {ref:.2f})")
+        if suspect_price < ref:
+            _send_suspect_notice(product, suspect_price, ref, settings, notifier)
     history = db.get_price_history(settings.db_path, pid, settings.history_days)  # antes de salvar a atual
     db.save_snapshot(settings.db_path, pid, snap)
 

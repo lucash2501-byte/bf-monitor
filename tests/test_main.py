@@ -240,7 +240,11 @@ def test_implausible_reading_is_an_error_and_never_alerts(settings):
     n = FakeNotifier()
     product = {**PRODUCT, "reference_price": 290.0, "target_price": 246.5}
     assert main.process_product(product, good(11.0), settings, n) == "error"
-    assert not n.sent
+    assert len(n.sent) == 1 and "Leitura suspeita" in n.sent[0] and "R$ 11.00" in n.sent[0]   # avisa, mas não é "alerta"
+    assert "🔥" not in n.sent[0] and "Abrir produto" in n.sent[0]
+    assert main.process_product(product, good(11.0), settings, n) == "error"
+    assert len(n.sent) == 1                                                                 # no máximo 1 aviso por dia
+    assert db.get_last_alert(settings.db_path, "p1") is None                                 # não conta como alerta de preço
     last = db.get_last_reading(settings.db_path, "p1")
     assert last["price_cash"] is None and "Leitura improvável" in last["error"] and "11.00" in last["error"]
 
@@ -270,3 +274,10 @@ def test_repo_products_have_reference_and_amazon_has_price_selector():
     assert all(abs(p["target_price"] - p["reference_price"] * 0.85) < 0.02 for p in products)
     amazon = [p for p in products if "amazon.com.br" in p["url"]]
     assert amazon and all(".a-price" in p["selectors"]["price"] for p in amazon)
+
+
+def test_implausibly_high_reading_is_an_error_without_notice(settings):
+    db.init_db(settings.db_path)
+    n = FakeNotifier()
+    product = {**PRODUCT, "reference_price": 100.0, "target_price": 85.0}
+    assert main.process_product(product, good(900.0), settings, n) == "error" and not n.sent
