@@ -110,7 +110,7 @@ Isso pega a "metade do dobro": se a loja deixou o produto a R$ 200, subiu para R
 R$ 300, o desconto é medido contra os R$ 200 e não é considerado real (o alerta avisa quando detecta essa subida).
 A mediana (em vez da média) também protege de uma leitura errada isolada.
 
-Depois de alertar, o mesmo produto só alerta de novo após `ALERT_COOLDOWN_HOURS` — a menos que o preço caia mais
+Depois de alertar, o mesmo produto só alerta de novo após `ALERT_COOLDOWN_HOURS` (padrão 24h: no máximo um lembrete por dia se o preço continuar igual) — a menos que o preço caia mais
 de 1% desde o último alerta.
 
 ⚠️ **Comece a rodar agora!** A Black Friday 2026 é em 27/11. Sem histórico anterior o app não consegue

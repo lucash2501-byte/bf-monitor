@@ -64,7 +64,7 @@ def load_settings() -> Settings:
         min_history_samples=_num("MIN_HISTORY_SAMPLES", "8", int, 1),
         min_history_span_hours=_num("MIN_HISTORY_SPAN_HOURS", "24", float, 0),
         min_discount_pct=_num("MIN_DISCOUNT_PCT", "15", float, 0),
-        cooldown_hours=_num("ALERT_COOLDOWN_HOURS", "6", float, 0),
+        cooldown_hours=_num("ALERT_COOLDOWN_HOURS", "24", float, 0),
         allow_alert_without_history=_bool("ALLOW_ALERT_WITHOUT_HISTORY", "false"),
         alert_on_unknown_stock=_bool("ALERT_ON_UNKNOWN_STOCK", "true"),
         confirm_alerts=_bool("CONFIRM_ALERTS", "true"),
