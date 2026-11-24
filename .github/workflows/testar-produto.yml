@@ -1,0 +1,45 @@
+name: Testar um produto
+
+# Lê só os produtos cujo nome/id contém o texto informado e mostra no log o preço lido. Não envia nada no Telegram.
+on:
+  workflow_dispatch:
+    inputs:
+      filtro:
+        description: "Parte do id/nome do produto (ex.: amazon)"
+        required: true
+        default: "amazon"
+
+jobs:
+  produto:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      FILTRO: ${{ inputs.filtro }}
+      DB_PATH: teste.db
+      LOG_FILE: ""
+      DEBUG_DIR: debug
+      COMPARE_ENABLED: "false"
+      STORE_COUPONS_ENABLED: "false"
+      CONFIRM_ALERTS: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar dependências
+        run: |
+          for i in 1 2 3; do
+            pip install -r requirements.txt && playwright install --with-deps chromium && break
+            echo "Tentativa $i de instalar falhou; esperando para repetir..."; sleep 20
+            [ "$i" = 3 ] && exit 1
+          done
+      - name: Ler o produto
+        run: python main.py --once --only "$FILTRO"
+      - name: Guardar páginas de depuração
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-produto
+          path: debug/
+          if-no-files-found: ignore

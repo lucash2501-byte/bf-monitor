@@ -289,3 +289,12 @@ def get_cached_coupons(db_path: str, max_age_hours: float) -> list[tuple[str, st
     with connect(db_path) as conn:
         rows = conn.execute("SELECT store, text, source, last_seen FROM coupon_cache ORDER BY store, last_seen DESC").fetchall()
     return [(r["store"], r["text"], r["source"], r["last_seen"]) for r in rows if hours_since(r["last_seen"]) <= max_age_hours]
+
+
+def purge_implausible(db_path: str, product_id: str, low: float, high: float) -> int:
+    """Apaga leituras de preço fora de [low, high] (números errados lidos da página). Retorna quantas apagou."""
+    with connect(db_path) as conn:
+        cur = conn.execute(
+            "DELETE FROM prices WHERE product_id = ? AND price_cash IS NOT NULL AND (price_cash < ? OR price_cash > ?)",
+            (product_id, low, high))
+        return cur.rowcount

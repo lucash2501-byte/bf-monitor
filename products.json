@@ -6,7 +6,8 @@
     "target_price": 237.15,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 279.0
   },
   {
     "id": "asics-gel-excite-11-paga1leva2",
@@ -15,7 +16,8 @@
     "target_price": 425.0,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 500.0
   },
   {
     "id": "under-armour-starlight-2-underarmour",
@@ -24,7 +26,8 @@
     "target_price": 237.15,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 279.0
   },
   {
     "id": "under-armour-charged-quicker-2-mercadolivre",
@@ -33,7 +36,8 @@
     "target_price": 261.8,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 308.0
   },
   {
     "id": "adidas-runfalcon-5-adidas",
@@ -42,7 +46,8 @@
     "target_price": 186.99,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 219.99
   },
   {
     "id": "asics-gel-nagoya-8-netshoes",
@@ -51,7 +56,8 @@
     "target_price": 201.87,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 237.49
   },
   {
     "id": "adidas-eclyptix-2000-mercadolivre",
@@ -60,7 +66,8 @@
     "target_price": 320.45,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 377.0
   },
   {
     "id": "olympikus-corre-4-netshoes",
@@ -69,7 +76,8 @@
     "target_price": 314.49,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 369.99
   },
   {
     "id": "olympikus-corre-4-centauro",
@@ -78,7 +86,8 @@
     "target_price": 322.15,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 379.0
   },
   {
     "id": "zara-tenis-monocromatico",
@@ -87,7 +96,8 @@
     "target_price": 237.15,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 279.0
   },
   {
     "id": "asics-japan-s-dafiti",
@@ -96,7 +106,8 @@
     "target_price": 237.99,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 279.99
   },
   {
     "id": "asics-gel-nunobiki-mercadolivre",
@@ -105,7 +116,8 @@
     "target_price": 297.49,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 349.99
   },
   {
     "id": "new-balance-1000-artwalk",
@@ -114,7 +126,8 @@
     "target_price": 560.99,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 659.99
   },
   {
     "id": "renner-camisa-gola-polo",
@@ -123,7 +136,8 @@
     "target_price": 76.42,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 89.91
   },
   {
     "id": "hering-camiseta-basica-preta",
@@ -132,7 +146,8 @@
     "target_price": 33.99,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 39.99
   },
   {
     "id": "hering-camiseta-basica-manga-curta",
@@ -141,7 +156,8 @@
     "target_price": 30.59,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 35.99
   },
   {
     "id": "hering-camiseta-trico",
@@ -150,7 +166,8 @@
     "target_price": 33.99,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 39.99
   },
   {
     "id": "lojamirante-kit-3-camisetas-algodao",
@@ -159,7 +176,8 @@
     "target_price": 102.82,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 120.96
   },
   {
     "id": "centauro-camiseta-oxer-manga-curta",
@@ -168,7 +186,8 @@
     "target_price": 25.49,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 29.99
   },
   {
     "id": "hering-camiseta-esportiva-raglan",
@@ -177,7 +196,8 @@
     "target_price": 33.99,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 39.99
   },
   {
     "id": "lojamirante-kit-3-camisetas-dryfit",
@@ -186,7 +206,8 @@
     "target_price": 89.39,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 105.16
   },
   {
     "id": "parolli-camiseta-poliamida-raglan",
@@ -195,7 +216,8 @@
     "target_price": 55.17,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 64.91
   },
   {
     "id": "mercadolivre-calca-social-alfaiataria-1",
@@ -204,7 +226,8 @@
     "target_price": 110.5,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 130.0
   },
   {
     "id": "mercadolivre-calca-social-alfaiataria-2",
@@ -213,7 +236,8 @@
     "target_price": 110.5,
     "variations": [
       "40"
-    ]
+    ],
+    "reference_price": 130.0
   },
   {
     "id": "bluhen-calca-moletom-duluth",
@@ -222,7 +246,8 @@
     "target_price": 118.92,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 139.91
   },
   {
     "id": "mercadolivre-kit-3-shorts-masculino",
@@ -231,7 +256,8 @@
     "target_price": 54.11,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 63.66
   },
   {
     "id": "mercadolivre-kit-3-bermudas-praia",
@@ -240,7 +266,8 @@
     "target_price": 72.17,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 84.91
   },
   {
     "id": "mercadolivre-kit-3-bermuda-tactel",
@@ -249,7 +276,8 @@
     "target_price": 53.24,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 62.64
   },
   {
     "id": "parolli-short-com-elastano",
@@ -258,76 +286,93 @@
     "target_price": 45.81,
     "variations": [
       "M"
-    ]
+    ],
+    "reference_price": 53.89
   },
   {
     "id": "saintgermain-relogio-belmont",
     "name": "Relógio Belmont Metal Prata Fundo Prata",
     "url": "https://www.saintgermainbrand.com.br/produtos/relogio-masculino-belmont-date-metal-prata-com-fundo-prata",
     "target_price": 144.41,
-    "variations": []
+    "variations": [],
+    "reference_price": 169.89
   },
   {
     "id": "mercadolivre-relogio-masculino-poedagar",
     "name": "Relógio Masculino Poedagar Minimalista Aço Inox",
     "url": "https://www.mercadolivre.com.br/relogio-masculino-poedagar-minimalista-aco-inox-preto-prateado-analogico/p/MLB47162808",
     "target_price": 81.59,
-    "variations": []
+    "variations": [],
+    "reference_price": 95.99
   },
   {
     "id": "amazon-perfume-1",
     "name": "Perfume Importado Amazon (Opção 1)",
     "url": "https://www.amazon.com.br/dp/B0D8L92LQW",
     "target_price": 260.1,
-    "variations": []
+    "variations": [],
+    "reference_price": 306.0,
+    "selectors": {
+      "price": "#corePriceDisplay_desktop_feature_div .a-price:not(.a-text-price) .a-offscreen, #corePrice_feature_div .a-price:not(.a-text-price) .a-offscreen, #apex_desktop .a-price:not(.a-text-price) .a-offscreen"
+    }
   },
   {
     "id": "amazon-perfume-turathi-blue",
     "name": "Perfume Turathi Blue Afnan EDP",
     "url": "https://www.amazon.com.br/Gen%C3%A9rico-Turathi-Blui/dp/B0GMDJRZ9F",
     "target_price": 354.45,
-    "variations": []
+    "variations": [],
+    "reference_price": 417.0,
+    "selectors": {
+      "price": "#corePriceDisplay_desktop_feature_div .a-price:not(.a-text-price) .a-offscreen, #corePrice_feature_div .a-price:not(.a-text-price) .a-offscreen, #apex_desktop .a-price:not(.a-text-price) .a-offscreen"
+    }
   },
   {
     "id": "mercadolivre-produto-1",
     "name": "Item Mercado Livre MLB8923630",
     "url": "https://www.mercadolivre.com.br/p/MLB8923630",
     "target_price": 192.11,
-    "variations": []
+    "variations": [],
+    "reference_price": 226.01
   },
   {
     "id": "mercadolivre-produto-2",
     "name": "Item Mercado Livre MLB69423094",
     "url": "https://www.mercadolivre.com.br/p/MLB69423094",
     "target_price": 373.99,
-    "variations": []
+    "variations": [],
+    "reference_price": 439.99
   },
   {
     "id": "shopee-produto-variado",
     "name": "Produto Shopee Selecionado",
     "url": "https://shopee.com.br/product/1259153662/52157561980",
     "target_price": 67.99,
-    "variations": []
+    "variations": [],
+    "reference_price": 79.99
   },
   {
     "id": "riachuelo-edredom-casal",
     "name": "Edredom Casal Microfibra Azul Riachuelo",
     "url": "https://www.riachuelo.com.br/edredom-casal-em-microfibra-azul-casa-riachuelo-16256891001_sku",
     "target_price": 76.49,
-    "variations": []
+    "variations": [],
+    "reference_price": 89.99
   },
   {
     "id": "mercadolivre-mizuno-hawk-6",
     "name": "Tênis Mizuno Masculino Hawk 6 (Mercado Livre)",
     "url": "https://www.mercadolivre.com.br/tenis-mizuno-masculino-hawk-6/up/MLBU4882858314?pdp_filters=item_id%3AMLB7471610508",
     "target_price": 233.07,
-    "variations": []
+    "variations": [],
+    "reference_price": 274.2
   },
   {
     "id": "parolli-blusa-oversized-quarter-zip",
     "name": "Blusa Oversized Quarter Zip Moletom (Parolli)",
     "url": "https://www.parolli.com.br/produtos/blusa-oversized-quarter-zip-moletom/",
     "target_price": 127.49,
-    "variations": []
+    "variations": [],
+    "reference_price": 149.99
   }
 ]

@@ -232,3 +232,41 @@ def test_alert_includes_store_coupons_already_seen(settings):
     assert main.process_product(PRODUCT, snap, settings, n) == "alert"
     msg = n.sent[0]
     assert "EXTRA20" in msg and msg.count("FRETE10") == 1 and "LIXO99" not in msg
+
+
+def test_implausible_reading_is_an_error_and_never_alerts(settings):
+    """Número solto lido da página (R$ 11 num perfume de R$ 290) não vira preço, histórico nem alerta."""
+    seed_history(settings, price=65.0)                       # histórico já poluído também não deve gerar alerta
+    n = FakeNotifier()
+    product = {**PRODUCT, "reference_price": 290.0, "target_price": 246.5}
+    assert main.process_product(product, good(11.0), settings, n) == "error"
+    assert not n.sent
+    last = db.get_last_reading(settings.db_path, "p1")
+    assert last["price_cash"] is None and "Leitura improvável" in last["error"] and "11.00" in last["error"]
+
+
+def test_plausible_reading_still_alerts_and_shows_discount_vs_your_price(settings):
+    seed_history(settings, price=400.0)
+    n = FakeNotifier()
+    product = {**PRODUCT, "reference_price": 400.0, "target_price": 340.0}
+    assert main.process_product(product, good(300.0), settings, n) == "alert"
+    assert "25.0% abaixo do preço que você informou (R$ 400,00)" in n.sent[0]
+
+
+def test_purge_removes_only_implausible_history(settings):
+    seed_history(settings, price=290.0, n=5)
+    with db.connect(settings.db_path) as conn:
+        for v in (6.0, 65.0, 24.0, 900.0):
+            conn.execute("INSERT INTO prices (product_id, ts, price_cash, in_stock) VALUES ('p1', datetime('now'), ?, 1)", (v,))
+    assert db.purge_implausible(settings.db_path, "p1", 290 * 0.35, 290 * 2.5) == 4
+    assert {p for _, p in db.get_price_history(settings.db_path, "p1", 30)} == {290.0}
+
+
+def test_repo_products_have_reference_and_amazon_has_price_selector():
+    import os
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "products.json")
+    products = main.load_products(path)
+    assert all(p.get("reference_price") for p in products)
+    assert all(abs(p["target_price"] - p["reference_price"] * 0.85) < 0.02 for p in products)
+    amazon = [p for p in products if "amazon.com.br" in p["url"]]
+    assert amazon and all(".a-price" in p["selectors"]["price"] for p in amazon)

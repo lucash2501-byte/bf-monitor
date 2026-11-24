@@ -10,6 +10,7 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import html
 import json
 import logging
@@ -69,6 +70,11 @@ def load_products(path: str) -> list[dict]:
             log.error("Produto ignorado (target_price inválido %r): %s", item["target_price"], item["name"])
             continue
         item["target_price"] = target
+        if "reference_price" in item:                      # o preço que você viu na loja (base para detectar leitura errada)
+            item["reference_price"] = parse_price(item["reference_price"])
+            if item["reference_price"] is None:
+                log.warning("reference_price inválido em '%s': ignorado", item["name"])
+                item.pop("reference_price")
 
         item["url"] = str(item["url"]).strip()
         if not item["url"].lower().startswith(("http://", "https://")):
@@ -97,6 +103,14 @@ def process_product(product: dict, snap: Snapshot, settings: Settings, notifier:
                     rescrape: Optional[Callable[[], Snapshot]] = None) -> str:
     """Salva a leitura, decide se alerta e envia. Retorna 'error', 'ok' ou 'alert'."""
     pid = product["id"]
+    ref = product.get("reference_price")
+    if not snap.error and snap.price_cash is not None and ref and not (
+            ref * PLAUSIBLE_MIN <= snap.price_cash <= ref * PLAUSIBLE_MAX):
+        # Preço muito fora do que você viu na loja: quase sempre é número errado lido da página (valor de cupom,
+        # parcela, selo...). Vira erro: não entra no histórico e não dispara alerta.
+        snap = dataclasses.replace(
+            snap, price_cash=None, price_installment=None,
+            error=f"Leitura improvável: R$ {snap.price_cash:.2f} (o esperado é perto de R$ {ref:.2f})")
     history = db.get_price_history(settings.db_path, pid, settings.history_days)  # antes de salvar a atual
     db.save_snapshot(settings.db_path, pid, snap)
 
@@ -199,6 +213,7 @@ def store_host(url: str) -> str:
 
 
 MAX_COUPONS_PER_MESSAGE = 8
+PLAUSIBLE_MIN, PLAUSIBLE_MAX = 0.35, 2.5   # faixa aceita em relação ao reference_price do produto
 
 
 def send_coupon_digest(batch: list[tuple[dict, list[str]]], settings: Settings, notifier: TelegramNotifier) -> int:
@@ -242,6 +257,13 @@ def run_cycle(settings: Settings, notifier: TelegramNotifier, only: Optional[str
         log.error("Nenhum produto válido em %s%s", settings.products_path, f" para --only {only!r}" if only else "")
         return
     log.info("Rodada iniciada: %d produto(s)", len(products))
+    for product in products:                       # leituras antigas absurdas (número errado da página) poluem a referência
+        ref = product.get("reference_price")
+        if ref:
+            removed = db.purge_implausible(settings.db_path, product["id"], ref * PLAUSIBLE_MIN, ref * PLAUSIBLE_MAX)
+            if removed:
+                log.warning("[%s] %d leitura(s) antiga(s) fora do plausível apagada(s) do histórico",
+                            product["name"], removed)
 
     counts = {"ok": 0, "error": 0, "alert": 0, "crash": 0}
     failing: list[tuple[dict, str]] = []

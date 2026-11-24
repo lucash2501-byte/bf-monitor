@@ -98,6 +98,9 @@ def build_alert_message(product: dict, snap, decision) -> str:
             f"📊 Histórico ({decision.samples} leituras em {_fmt_span(decision.span_hours)}): "
             f"referência {_brl(decision.ref_price)} | mínima: {_brl(decision.min_price)}"
         )
+    mine = product.get("reference_price")
+    if mine:
+        lines.append(f"🧾 {(1 - snap.price_cash / mine) * 100:.1f}% abaixo do preço que você informou ({_brl(mine)})")
     if decision.discount_vs_ref_pct is not None:
         lines.append(f"📉 <b>{decision.discount_vs_ref_pct:.1f}% abaixo da referência</b> (desconto real)")
     for w in decision.warnings:
